@@ -1,5 +1,15 @@
 const DEMO_AUTH_KEY = 'balangkas.demo.auth';
 const DEMO_AUTH_EVENT = 'balangkas:demo-auth-changed';
+const LOCAL_USERS_KEY = 'balangkas.local.users';
+
+export const DEMO_STUDENT_LOGIN = {
+  email: 'student@balangkas.local',
+  password: 'Student123!',
+  profile: {
+    full_name: 'Recruit Alpha',
+    role: 'student',
+  },
+};
 
 export const DEMO_INSTRUCTOR_LOGIN = {
   email: 'instructor@balangkas.local',
@@ -18,6 +28,8 @@ export const DEMO_ADMIN_LOGIN = {
     role: 'admin',
   },
 };
+
+const BUILTIN_USERS = [DEMO_STUDENT_LOGIN, DEMO_INSTRUCTOR_LOGIN, DEMO_ADMIN_LOGIN];
 
 function canUseStorage() {
   return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
@@ -70,10 +82,93 @@ export function subscribeToDemoAuthChanges(callback) {
   };
 }
 
+function normalizeEmail(value) {
+  return value.trim().toLowerCase();
+}
+
+function readLocalUsers() {
+  if (!canUseStorage()) {
+    return [];
+  }
+
+  try {
+    const raw = window.localStorage.getItem(LOCAL_USERS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeLocalUsers(users) {
+  if (!canUseStorage()) {
+    return;
+  }
+
+  window.localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
+}
+
+export function getLocalUsers() {
+  return readLocalUsers();
+}
+
+export function registerLocalUser({ firstName, lastName, email, password, role = 'student' }) {
+  const cleanEmail = normalizeEmail(email);
+  const users = readLocalUsers();
+  const existsInLocal = users.some((entry) => normalizeEmail(entry.email) === cleanEmail);
+  const existsInBuiltin = BUILTIN_USERS.some((entry) => normalizeEmail(entry.email) === cleanEmail);
+
+  if (existsInLocal || existsInBuiltin) {
+    throw new Error('An account with this email already exists.');
+  }
+
+  const fullName = `${(firstName || '').trim()} ${(lastName || '').trim()}`.trim() || cleanEmail;
+
+  users.push({
+    id: `local-${Date.now()}`,
+    email: cleanEmail,
+    password,
+    profile: {
+      full_name: fullName,
+      role,
+    },
+  });
+
+  writeLocalUsers(users);
+}
+
+export function authenticateLocalUser(email, password) {
+  const cleanEmail = normalizeEmail(email);
+  const builtinMatch = BUILTIN_USERS.find(
+    (entry) => normalizeEmail(entry.email) === cleanEmail && entry.password === password
+  );
+
+  if (builtinMatch) {
+    return {
+      email: builtinMatch.email,
+      profile: builtinMatch.profile,
+    };
+  }
+
+  const users = readLocalUsers();
+  const localMatch = users.find(
+    (entry) => normalizeEmail(entry.email) === cleanEmail && entry.password === password
+  );
+
+  if (!localMatch) {
+    return null;
+  }
+
+  return {
+    email: localMatch.email,
+    profile: localMatch.profile,
+  };
+}
+
 export function matchesDemoInstructorLogin(email, password) {
-  return email.trim().toLowerCase() === DEMO_INSTRUCTOR_LOGIN.email && password === DEMO_INSTRUCTOR_LOGIN.password;
+  return normalizeEmail(email) === DEMO_INSTRUCTOR_LOGIN.email && password === DEMO_INSTRUCTOR_LOGIN.password;
 }
 
 export function matchesDemoAdminLogin(email, password) {
-  return email.trim().toLowerCase() === DEMO_ADMIN_LOGIN.email && password === DEMO_ADMIN_LOGIN.password;
+  return normalizeEmail(email) === DEMO_ADMIN_LOGIN.email && password === DEMO_ADMIN_LOGIN.password;
 }

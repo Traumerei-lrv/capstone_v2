@@ -1,6 +1,5 @@
 import { useLocation, NavLink, Outlet } from "react-router-dom";
 import { clearDemoAuthSession } from "../../demoAuth";
-import { supabase } from "../../supabase";
 
 const tabs = [
   { label: "Users", to: "/admin", base: "bg-[#8b5cf6]", active: "bg-[#8b5cf6]" },
@@ -49,15 +48,9 @@ export default function AdminLayout() {
   const location = useLocation();
   const frameTheme = getFrameTheme(location.pathname);
 
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch (error) {
-      console.error("Logout failed:", error);
-    } finally {
-      clearDemoAuthSession();
-      window.location.assign("/");
-    }
+  const handleLogout = () => {
+    clearDemoAuthSession();
+    window.location.assign("/");
   };
 
   return (

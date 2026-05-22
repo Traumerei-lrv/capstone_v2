@@ -19,6 +19,8 @@ import MissionsTab from './components/MissionsTab';
 import MaterialsTab from './components/MaterialsTab';
 import AchievementsTab from './components/AchievementsTab';
 import PerformanceTab from './components/PerformanceTab';
+import ProfileTab from './components/ProfileTab';
+import { clearDemoAuthSession } from '../../demoAuth';
 
 /**
  * BALANGKAS STUDENT DASHBOARD - REACT COMPONENT
@@ -370,7 +372,12 @@ const Header = ({ selectedTab, setSelectedTab }) => (
           <Bell className="w-5 h-5" />
           <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-orange-500 border-2 border-blue-700 rounded-full"></span>
         </button>
-        <button className="p-1 hover:bg-blue-600 rounded-full transition-colors">
+        <button
+          type="button"
+          onClick={() => setSelectedTab('profile')}
+          aria-label="Open profile"
+          className={`p-1 rounded-full transition-colors ${selectedTab === 'profile' ? 'bg-blue-700 ring-2 ring-white/70' : 'hover:bg-blue-600'}`}
+        >
           <div className="w-8 h-8 rounded-full border-2 border-white overflow-hidden flex items-center justify-center bg-blue-100">
             <User className="text-blue-600 w-5 h-5" />
           </div>
@@ -384,6 +391,11 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState('home');
   const [materialFilter, setMaterialFilter] = useState('All');
+
+  const handleLogout = async () => {
+    clearDemoAuthSession();
+    window.location.assign('/');
+  };
 
   const filteredMaterials = useMemo(
     () => materialItems.filter((material) => materialFilter === 'All' || material.type.toLowerCase() === materialFilter.toLowerCase()),
@@ -437,6 +449,10 @@ const Dashboard = () => {
           loadDashboard={loadDashboard}
         />
       );
+    }
+
+    if (selectedTab === 'profile') {
+      return <ProfileTab onLogout={handleLogout} />;
     }
 
     return (

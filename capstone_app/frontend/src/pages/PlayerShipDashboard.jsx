@@ -4,7 +4,6 @@ import HyperspaceBackground from "../components/HyperspaceBackground";
 import LoadingScreen from "./LoadingScreen";
 import cockpitDashboard from "../assets/img/cockpit-dashboard.png";
 import btnAdventure from "../assets/img/btn_adventure-fullreso.png";
-import { supabase } from "../supabase";
 import { clearDemoAuthSession } from "../demoAuth";
 
 export default function PlayerShipDashboard() {
@@ -72,14 +71,9 @@ export default function PlayerShipDashboard() {
     navigate('/nodemapoverlay');
   };
 
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      clearDemoAuthSession();
-      navigate('/', { replace: true });
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
+  const handleLogout = () => {
+    clearDemoAuthSession();
+    navigate('/', { replace: true });
   };
 
   return (

@@ -1,113 +1,88 @@
-import {
-  atRiskStudents,
-  instructorStats,
-  leaderboardRows,
-  quickActions,
-  recentActivities,
-} from './instructorData';
+import { AlertTriangle, BookOpen, CheckCircle2, Users } from 'lucide-react';
+
+const stats = [
+  { label: 'Active Classes', value: '6', note: 'Class groups currently handled', icon: BookOpen, tone: 'bg-blue-100 text-blue-600' },
+  { label: 'Enrolled Students', value: '128', note: 'Across all managed classes', icon: Users, tone: 'bg-emerald-100 text-emerald-600' },
+  { label: 'Avg Completion', value: '76%', note: 'Lessons and activities completion', icon: CheckCircle2, tone: 'bg-orange-100 text-orange-600' },
+  { label: 'Needs Support', value: '14', note: 'Students flagged for intervention', icon: AlertTriangle, tone: 'bg-rose-100 text-rose-600' },
+];
+
+const reminders = [
+  'Publish Week 4 recursion activity for Section A-12.',
+  'Review low scores in linked list assessment.',
+  'Post announcement about Friday challenge window.',
+];
 
 function StatCard({ stat }) {
+  const Icon = stat.icon;
+
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">{stat.label}</p>
-      <p className="mt-3 text-3xl font-black text-[#165A9E]">{stat.value}</p>
+    <article className="rounded-2xl border-2 border-blue-100 bg-white p-5 shadow-sm">
+      <div className={`mb-3 inline-flex rounded-xl p-2 ${stat.tone}`}>
+        <Icon className="w-5 h-5" />
+      </div>
+      <p className="text-xs uppercase tracking-widest font-black text-slate-500">{stat.label}</p>
+      <p className="mt-2 text-3xl font-black text-blue-900">{stat.value}</p>
       <p className="mt-2 text-sm text-slate-500">{stat.note}</p>
     </article>
   );
 }
 
-function Panel({ title, subtitle, children }) {
-  return (
-    <section className="rounded-[1.4rem] border border-slate-200 bg-slate-50/90 p-4 shadow-sm sm:p-5">
-      <div className="mb-4 flex items-end justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-bold text-slate-900">{title}</h2>
-          <p className="text-sm text-slate-500">{subtitle}</p>
-        </div>
-      </div>
-      {children}
-    </section>
-  );
-}
-
 export default function InstructorDashboard() {
   return (
-    <div className="space-y-5">
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-4xl font-black text-blue-900 tracking-tight">Instructor Home</h1>
+        <p className="mt-2 text-slate-500 font-medium">Monitor your current teaching status and jump into class operations quickly.</p>
+      </div>
+
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {instructorStats.map((stat) => (
+        {stats.map((stat) => (
           <StatCard key={stat.label} stat={stat} />
         ))}
       </section>
 
-      <div className="grid gap-5 xl:grid-cols-[1.3fr_0.9fr]">
-        <Panel title="Performance Snapshot" subtitle="Leaderboard and students who need attention">
-          <div className="grid gap-4 lg:grid-cols-2">
-            <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
-              <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Top 5 Leaderboard</h3>
-              <div className="space-y-3">
-                {leaderboardRows.map((row) => (
-                  <div key={row.rank} className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-3">
-                    <div>
-                      <p className="font-semibold text-slate-900">#{row.rank} {row.name}</p>
-                      <p className="text-sm text-slate-500">{row.streak}</p>
-                    </div>
-                    <p className="text-lg font-black text-[#F39200]">{row.score}</p>
-                  </div>
-                ))}
-              </div>
+      <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+        <section className="rounded-2xl border-2 border-blue-100 bg-white p-6">
+          <h2 className="text-xl font-black text-blue-900">Today&apos;s Teaching Focus</h2>
+          <p className="mt-1 text-sm text-slate-500">Suggested priorities based on class activity signals.</p>
+          <div className="mt-5 space-y-3">
+            <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+              <p className="text-xs uppercase tracking-widest font-black text-blue-600">Priority 1</p>
+              <p className="mt-1 font-bold text-blue-900">Linked List remediation session</p>
+              <p className="text-sm text-slate-600">Students in Section B-09 are dropping points on pointer updates.</p>
             </div>
-
-            <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
-              <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">At-Risk Students</h3>
-              <div className="space-y-3">
-                {atRiskStudents.map((student) => (
-                  <div key={student.name} className="rounded-xl border border-rose-100 bg-rose-50/70 px-3 py-3">
-                    <p className="font-semibold text-rose-900">{student.name}</p>
-                    <p className="text-sm text-rose-700">{student.concern}</p>
-                    <p className="text-xs text-rose-600/80">{student.detail}</p>
-                  </div>
-                ))}
-              </div>
+            <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+              <p className="text-xs uppercase tracking-widest font-black text-blue-600">Priority 2</p>
+              <p className="mt-1 font-bold text-blue-900">Publish recursion activity</p>
+              <p className="text-sm text-slate-600">Launch the weekly quiz and coding challenge before 5:00 PM.</p>
+            </div>
+            <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+              <p className="text-xs uppercase tracking-widest font-black text-blue-600">Priority 3</p>
+              <p className="mt-1 font-bold text-blue-900">Check completion gaps</p>
+              <p className="text-sm text-slate-600">14 students have incomplete tasks from last week.</p>
             </div>
           </div>
-        </Panel>
+        </section>
 
-        <div className="space-y-5">
-          <Panel title="Quick Actions" subtitle="Common instructor tasks">
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-              {quickActions.map((action) => (
-                <button
-                  key={action.label}
-                  className={[
-                    'rounded-2xl px-4 py-4 text-left font-semibold transition-transform hover:-translate-y-0.5',
-                    action.tone === 'blue' ? 'bg-[#165A9E] text-white' : '',
-                    action.tone === 'amber' ? 'bg-[#F39200] text-white' : '',
-                    action.tone === 'emerald' ? 'bg-emerald-600 text-white' : '',
-                    action.tone === 'slate' ? 'bg-slate-700 text-white' : '',
-                  ].join(' ')}
-                >
-                  {action.label}
-                </button>
-              ))}
-            </div>
-          </Panel>
-
-          <Panel title="Recent Activity Feed" subtitle="Latest updates from activity_logs">
-            <div className="space-y-3">
-              {recentActivities.map((entry) => (
-                <article key={entry.action} className="rounded-xl bg-white p-3 ring-1 ring-slate-200">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-slate-900">{entry.action}</p>
-                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">{entry.type}</p>
-                    </div>
-                    <p className="text-sm text-slate-500">{entry.time}</p>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </Panel>
-        </div>
+        <section className="rounded-2xl border-2 border-blue-100 bg-white p-6">
+          <h2 className="text-xl font-black text-blue-900">Reminders</h2>
+          <p className="mt-1 text-sm text-slate-500">Current operational reminders.</p>
+          <div className="mt-5 space-y-3">
+            {reminders.map((item, index) => (
+              <div key={item} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-500">Task {index + 1}</p>
+                <p className="mt-1 text-sm font-semibold text-slate-700">{item}</p>
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="w-full mt-5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-black text-xs uppercase tracking-widest px-4 py-3"
+          >
+            Open Class Management
+          </button>
+        </section>
       </div>
     </div>
   );

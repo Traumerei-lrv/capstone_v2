@@ -1,14 +1,21 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import logo from '../../assets/logo/balangkas_logo.png';
 import googleIcon from '../../assets/ico/google_icon.png';
-import { supabase } from '../../supabase';
 // import PageTransition from '../../components/PageTransition';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import TypewriterEffect from '../../components/TypewriterEffect';
-import { DEMO_ADMIN_LOGIN, DEMO_INSTRUCTOR_LOGIN, matchesDemoAdminLogin, matchesDemoInstructorLogin, setDemoAuthSession } from '../../demoAuth';
+import {
+  DEMO_ADMIN_LOGIN,
+  DEMO_INSTRUCTOR_LOGIN,
+  DEMO_STUDENT_LOGIN,
+  authenticateLocalUser,
+  registerLocalUser,
+  setDemoAuthSession,
+} from '../../demoAuth';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -19,12 +26,13 @@ export default function LoginPage() {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
-  const [showTransition, setShowTransition] = useState(false);
-  const [nextRoute, setNextRoute] = useState('/');
+
+  useEffect(() => {
+    const mode = new URLSearchParams(location.search).get('mode');
+    setIsSignup(mode === 'signup');
+  }, [location.search]);
 
   const isValidEmail = (value) => /\S+@\S+\.\S+/.test(value);
-  const redirectToApp = window.location.origin;
-
   const handleAuth = async (event) => {
     event.preventDefault();
     setError('');
@@ -47,108 +55,54 @@ export default function LoginPage() {
     }
 
     setIsLoading(true);
+    let routeAfterLogin = '/playershipdashboard';
 
     try {
-      if (!isSignup && matchesDemoInstructorLogin(email, password)) {
-        await supabase.auth.signOut().catch(() => {});
-
-        setDemoAuthSession({
-          email: DEMO_INSTRUCTOR_LOGIN.email,
-          profile: DEMO_INSTRUCTOR_LOGIN.profile,
-        });
-
-        setMessage('Instructor demo login successful.');
-        authSucceeded = true;
-        setNextRoute('/instructor');
-        return;
-      }
-
-      if (!isSignup && matchesDemoAdminLogin(email, password)) {
-        await supabase.auth.signOut().catch(() => {});
-
-        setDemoAuthSession({
-          email: DEMO_ADMIN_LOGIN.email,
-          profile: DEMO_ADMIN_LOGIN.profile,
-        });
-
-        setMessage('Admin demo login successful.');
-        authSucceeded = true;
-        setNextRoute('/admin');
-        return;
-      }
-
       if (isSignup) {
-        const { data, error: signUpError } = await supabase.auth.signUp({
+        registerLocalUser({
+          firstName,
+          lastName,
           email,
           password,
-          options: {
-            data: {
-              first_name: firstName.trim(),
-              last_name: lastName.trim(),
-              full_name: `${firstName.trim()} ${lastName.trim()}`.trim(),
-            },
-              emailRedirectTo: redirectToApp,
-          },
+          role: 'student',
         });
-
-        if (signUpError) {
-          throw signUpError;
+        const localSession = authenticateLocalUser(email, password);
+        if (!localSession) {
+          throw new Error('Unable to sign in after account creation.');
         }
-
-        if (data.session) {
-          setMessage('Account created successfully.');
-          authSucceeded = true;
-          setNextRoute('/');
-        } else {
-          setMessage('Account created. Check your email to confirm your account.');
-        }
+        setDemoAuthSession(localSession);
+        setMessage('Account created successfully.');
+        authSucceeded = true;
+        routeAfterLogin = '/playershipdashboard';
       } else {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (signInError) {
-          throw signInError;
+        const session = authenticateLocalUser(email, password);
+        if (!session) {
+          throw new Error('Invalid email or password.');
         }
-
+        setDemoAuthSession(session);
         setMessage('Login successful.');
         authSucceeded = true;
-        setNextRoute('/');
+        if (session.profile?.role === 'admin') {
+          routeAfterLogin = '/admin';
+        } else if (session.profile?.role === 'instructor') {
+          routeAfterLogin = '/instructor';
+        } else {
+          routeAfterLogin = '/playershipdashboard';
+        }
       }
     } catch (authError) {
       setError(authError.message || 'Authentication failed.');
     } finally {
       setIsLoading(false);
       if (authSucceeded) {
-        setShowTransition(true);
+        navigate(routeAfterLogin, { replace: true });
       }
     }
   };
 
   const handleGoogleLogin = async () => {
     setError('');
-    setMessage('');
-    setIsLoading(true);
-
-    try {
-      const { error: googleError } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: redirectToApp,
-        },
-      });
-
-      if (googleError) {
-        throw googleError;
-      }
-
-      setMessage('Redirecting to Google sign-in...');
-    } catch (googleError) {
-      setError(googleError.message || 'Google sign-in failed.');
-    } finally {
-      setIsLoading(false);
-    }
+    setMessage('Google sign-in is disabled while local role-based auth is active.');
   };
 
   return (
@@ -286,6 +240,8 @@ export default function LoginPage() {
 
               {!isSignup ? (
                 <p className="text-center text-xs uppercase tracking-[0.24em] text-gray-500">
+                  Demo student: {DEMO_STUDENT_LOGIN.email} / {DEMO_STUDENT_LOGIN.password}
+                  <br />
                   Demo instructor: {DEMO_INSTRUCTOR_LOGIN.email} / {DEMO_INSTRUCTOR_LOGIN.password}
                   <br />
                   Demo admin: {DEMO_ADMIN_LOGIN.email} / {DEMO_ADMIN_LOGIN.password}

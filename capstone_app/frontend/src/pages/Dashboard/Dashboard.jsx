@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
-import { supabase } from '../../supabase';
+import { clearDemoAuthSession } from '../../demoAuth';
 
 export default function Dashboard({ user }) {
   const navigate = useNavigate();
@@ -47,13 +47,9 @@ export default function Dashboard({ user }) {
     });
   };
 
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      navigate('/', { replace: true });
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
+  const handleLogout = () => {
+    clearDemoAuthSession();
+    navigate('/', { replace: true });
   };
 
   return (

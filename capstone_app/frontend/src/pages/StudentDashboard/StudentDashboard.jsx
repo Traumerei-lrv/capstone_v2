@@ -394,7 +394,7 @@ const Dashboard = () => {
 
   const handleLogout = async () => {
     clearDemoAuthSession();
-    window.location.assign('/');
+    navigate('/', { replace: true });
   };
 
   const filteredMaterials = useMemo(

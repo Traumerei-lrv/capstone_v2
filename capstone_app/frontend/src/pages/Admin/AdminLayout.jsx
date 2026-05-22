@@ -1,4 +1,4 @@
-import { useLocation, NavLink, Outlet } from "react-router-dom";
+import { useLocation, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { clearDemoAuthSession } from "../../demoAuth";
 
 const tabs = [
@@ -45,12 +45,13 @@ function TabLink({ tab }) {
 }
 
 export default function AdminLayout() {
+  const navigate = useNavigate();
   const location = useLocation();
   const frameTheme = getFrameTheme(location.pathname);
 
   const handleLogout = () => {
     clearDemoAuthSession();
-    window.location.assign("/");
+    navigate("/", { replace: true });
   };
 
   return (

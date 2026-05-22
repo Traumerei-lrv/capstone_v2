@@ -6,6 +6,7 @@ import Test from './pages/test';
 import StudentDashboard from './pages/StudentDashboard/StudentDashboard';
 import PlayerShipDashboard from './pages/PlayerShipDashboard';
 import NodeMapOverlay from './pages/NodeMapOverlay';
+import TreeDeliveryDrone from './pages/TreeDeliveryDrone';
 import RecursionPage from './pages/StudentDashboard/missions/Recursion/RecursionPage';
 import IterationPage from './pages/StudentDashboard/missions/Iteration/IterationPage';
 import LinkedListPage from './pages/StudentDashboard/missions/LinkedList/LinkedListPage';
@@ -107,7 +108,9 @@ export default function App() {
         <Route path="/playershipdashboard/linked-list" element={<LinkedListPage />} />
 
         <Route element={<ProtectedRoute currentUser={currentUser} currentRole={currentRole} isCheckingAuth={isCheckingAuth} allowedRoles={['student']} />}>
-          <Route path="/playershipdashboard" element={<StudentDashboard />} />
+          <Route path="/playershipdashboard" element={<PlayerShipDashboard />} />
+          <Route path="/tree-delivery-drone" element={<TreeDeliveryDrone />} />
+          <Route path="/studentdashboard" element={<StudentDashboard />} />
           <Route path="/playership" element={<PlayerShipDashboard />} />
           <Route path="/nodemapoverlay" element={<NodeMapOverlay />} />
         </Route>

@@ -6,6 +6,34 @@ import cockpitDashboard from "../assets/img/cockpit-dashboard.png";
 import btnAdventure from "../assets/img/btn_adventure-fullreso.png";
 import { clearDemoAuthSession } from "../demoAuth";
 
+const turbineFailurePage = new URL("../concept-main/assets/turbine/turbine_failure.html", import.meta.url).href;
+const galaxyHopsPage = new URL("../concept-main/galaxy_hops.html", import.meta.url).href;
+const overHeatPage = new URL("../concept-main/over_heat.html", import.meta.url).href;
+
+const challengeHitboxes = [
+  {
+    id: "turbine-failure-hitbox",
+    href: turbineFailurePage,
+    title: "Turbine Failure Challenge",
+    left: "20.47%",
+    top: "53.8%",
+  },
+  {
+    id: "galaxy-hops-hitbox",
+    href: galaxyHopsPage,
+    title: "Galaxy Hops Challenge",
+    left: "31.82%",
+    top: "53.8%",
+  },
+  {
+    id: "over-heat-hitbox",
+    href: overHeatPage,
+    title: "Reactor Overheat Challenge",
+    left: "43.75%",
+    top: "53.15%",
+  },
+];
+
 export default function PlayerShipDashboard() {
   const navigate = useNavigate();
   const [showLoading, setShowLoading] = useState(true);
@@ -104,6 +132,17 @@ export default function PlayerShipDashboard() {
       />
 
       <div className={`relative z-10 transition-opacity duration-700 ${showLoading || isNodeMapLoading ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+        {challengeHitboxes.map((hitbox) => (
+          <a
+            key={hitbox.id}
+            href={hitbox.href}
+            title={hitbox.title}
+            className="absolute z-20 block h-[clamp(52px,5.4vw,88px)] w-[clamp(52px,5.4vw,88px)] -translate-x-1/2 -translate-y-1/2 rounded-full transition hover:bg-cyan-300/25"
+            style={{ left: hitbox.left, top: hitbox.top }}
+            aria-label={hitbox.title}
+          />
+        ))}
+
         <div className="relative mx-auto flex min-h-screen w-full max-w-[1440px] flex-col justify-between px-5 py-6 sm:px-8 lg:px-12">
           <main className="relative flex flex-1 items-center justify-center py-8">
             <div className="relative h-[520px] w-full max-w-[1200px]">

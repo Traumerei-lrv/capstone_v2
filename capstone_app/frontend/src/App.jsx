@@ -107,7 +107,8 @@ export default function App() {
         <Route path="/playershipdashboard/linked-list" element={<LinkedListPage />} />
 
         <Route element={<ProtectedRoute currentUser={currentUser} currentRole={currentRole} isCheckingAuth={isCheckingAuth} allowedRoles={['student']} />}>
-          <Route path="/playershipdashboard" element={<StudentDashboard />} />
+          <Route path="/playershipdashboard" element={<PlayerShipDashboard />} />
+          <Route path="/studentdashboard" element={<StudentDashboard />} />
           <Route path="/playership" element={<PlayerShipDashboard />} />
           <Route path="/nodemapoverlay" element={<NodeMapOverlay />} />
         </Route>

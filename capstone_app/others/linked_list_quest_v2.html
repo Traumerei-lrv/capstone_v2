@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#07071a;color:#ccd;font-family:'Press Start 2P',monospace;overflow-x:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:#07071a}::-webkit-scrollbar-thumb{background:#2a2a5a}
+input[type=number]{-moz-appearance:textfield}input::-webkit-inner-spin-button{display:none}
+textarea{outline:none}input{outline:none}
+.btn{font-family:'Press Start 2P',monospace;cursor:pointer;border-radius:2px;letter-spacing:1px;transition:transform 0.08s}
+.btn:active{transform:scale(0.95)}
+.tab-btn{font-family:'Press Start 2P',monospace;cursor:pointer;border:none;transition:all 0.12s}
+</style>
+</head>
+<body>
+<div id="root" style="padding:8px;min-height:700px;max-width:720px;margin:0 auto;"></div>
+<script>
+const PF="'Press Start 2P',monospace";
+const C={bg:"#07071a",panel:"#0f0f26",pb:"#252550",nb:"#1a3a6a",nbc:"#4a8aff",nt:"#aaddff",ptr:"#ff8c42",nl:"#ff4466",ok:"#44ff88",err:"#ff4455",gold:"#ffd700",pur:"#9933ff",teal:"#00ccbb",acc:"#ff6699",prev:"#ff6b35",cyan:"#00e5ff"};
+
+// ── Memory address generator ──
+function fakeAddr(seed){const h="0123456789ABCDEF";let r="0x";const s=seed*2654435761;for(let i=0;i<4;i++)r+=h[(s>>(i*4))&15];return r;}
+
+// ── Singly LL ──
+class SNode{constructor(v,idx){this.val=v;this.next=null;this.addr=fakeAddr(idx+Math.floor(Math.random()*100));}}
+class SLL{
+  constructor(){this.head=null;this.size=0;this._ic=0;}
+  clone(){const l=new SLL();let c=this.head;while(c){l.insertTail(c.val);c=c.next;}return l;}
+  insertTail(v){const n=new SNode(v,++this._ic);if(!this.head)this.head=n;else{let c=this.head;while(c.next)c=c.next;c.next=n;}this.size++;return{ok:true,msg:`✓ Inserted ${v} at tail | addr: ${n.addr}`};}
+  insertHead(v){const n=new SNode(v,++this._ic);n.next=this.head;this.head=n;this.size++;return{ok:true,msg:`✓ Inserted ${v} at head | addr: ${n.addr}`};}
+  delete(v){if(!this.head)return{ok:false,msg:`✗ List empty`};if(this.head.val===v){this.head=this.head.next;this.size--;return{ok:true,msg:`✓ Deleted node [${v}]`};}let c=this.head;while(c.next){if(c.next.val===v){c.next=c.next.next;this.size--;return{ok:true,msg:`✓ Deleted node [${v}]`};}c=c.next;}return{ok:false,msg:`✗ ${v} not found`};}
+  search(v){let c=this.head,i=0;while(c){if(c.val===v)return{ok:true,msg:`✓ Found ${v} at index [${i}] addr:${c.addr}`,idx:i};c=c.next;i++;}return{ok:false,msg:`✗ ${v} not found`};}
+  count(){return{ok:true,msg:`# Size = ${this.size} node(s)`};}
+  display(){if(!this.head)return{ok:true,msg:`∅ NULL`};let a=[],c=this.head;while(c){a.push(c.val);c=c.next;}return{ok:true,msg:`▶ ${a.join(" → ")} → NULL`};}
+  toNodes(){let a=[],c=this.head;while(c){a.push({val:c.val,addr:c.addr,next:c.next?c.next.addr:"NULL"});c=c.next;}return a;}
+}
+
+// ── Doubly LL ──
+class DNode{constructor(v,idx){this.val=v;this.prev=null;this.next=null;this.addr=fakeAddr(idx+50+Math.floor(Math.random()*100));}}
+class DLL{
+  constructor(){this.head=null;this.tail=null;this.size=0;this._ic=0;}
+  clone(){const l=new DLL();let c=this.head;while(c){l.insertTail(c.val);c=c.next;}return l;}
+  insertTail(v){const n=new DNode(v,++this._ic);if(!this.head){this.head=n;this.tail=n;}else{n.prev=this.tail;this.tail.next=n;this.tail=n;}this.size++;return{ok:true,msg:`✓ Inserted ${v} at tail | addr:${n.addr}`};}
+  insertHead(v){const n=new DNode(v,++this._ic);if(!this.head){this.head=n;this.tail=n;}else{n.next=this.head;this.head.prev=n;this.head=n;}this.size++;return{ok:true,msg:`✓ Inserted ${v} at head | addr:${n.addr}`};}
+  delete(v){let c=this.head;while(c){if(c.val===v){if(c.prev)c.prev.next=c.next;else this.head=c.next;if(c.next)c.next.prev=c.prev;else this.tail=c.prev;this.size--;return{ok:true,msg:`✓ Deleted [${v}]`};}c=c.next;}return{ok:false,msg:`✗ ${v} not found`};}
+  search(v){let c=this.head,i=0;while(c){if(c.val===v)return{ok:true,msg:`✓ Found ${v} at [${i}] addr:${c.addr}`,idx:i};c=c.next;i++;}return{ok:false,msg:`✗ ${v} not found`};}
+  count(){return{ok:true,msg:`# Size = ${this.size} node(s)`};}
+  display(){if(!this.head)return{ok:true,msg:`∅ NULL`};let a=[],c=this.head;while(c){a.push(c.val);c=c.next;}return{ok:true,msg:`▶ NULL ↔ ${a.join(" ↔ ")} ↔ NULL`};}
+  toNodes(){let a=[],c=this.head;while(c){a.push({val:c.val,addr:c.addr,prev:c.prev?c.prev.addr:"NULL",next:c.next?c.next.addr:"NULL"});c=c.next;}return a;}
+}
+
+// ── Circular LL ──
+class CNode{constructor(v,idx){this.val=v;this.next=null;this.addr=fakeAddr(idx+99+Math.floor(Math.random()*100));}}
+class CLL{
+  constructor(){this.head=null;this.size=0;this._ic=0;}
+  clone(){const l=new CLL();if(!this.head)return l;let c=this.head;do{l.insertTail(c.val);c=c.next;}while(c!==this.head);return l;}
+  getTail(){if(!this.head)return null;let c=this.head;while(c.next!==this.head)c=c.next;return c;}
+  insertTail(v){const n=new CNode(v,++this._ic);if(!this.head){this.head=n;n.next=n;}else{const t=this.getTail();t.next=n;n.next=this.head;}this.size++;return{ok:true,msg:`✓ Inserted ${v} | addr:${n.addr} → loops to HEAD`};}
+  insertHead(v){const n=new CNode(v,++this._ic);if(!this.head){this.head=n;n.next=n;}else{const t=this.getTail();n.next=this.head;t.next=n;this.head=n;}this.size++;return{ok:true,msg:`✓ Inserted ${v} at head | tail now → ${n.addr}`};}
+  delete(v){if(!this.head)return{ok:false,msg:`✗ Empty`};if(this.size===1&&this.head.val===v){this.head=null;this.size--;return{ok:true,msg:`✓ Deleted last node [${v}]`};}if(this.head.val===v){const t=this.getTail();this.head=this.head.next;t.next=this.head;this.size--;return{ok:true,msg:`✓ Deleted head [${v}]`};}let c=this.head;while(c.next!==this.head){if(c.next.val===v){c.next=c.next.next;this.size--;return{ok:true,msg:`✓ Deleted [${v}]`};}c=c.next;}return{ok:false,msg:`✗ ${v} not found`};}
+  search(v){if(!this.head)return{ok:false,msg:`✗ Empty`};let c=this.head,i=0;do{if(c.val===v)return{ok:true,msg:`✓ Found ${v} at [${i}] addr:${c.addr}`,idx:i};c=c.next;i++;}while(c!==this.head);return{ok:false,msg:`✗ ${v} not found`};}
+  count(){return{ok:true,msg:`# Size = ${this.size} node(s)`};}
+  display(){if(!this.head)return{ok:true,msg:`∅ EMPTY`};let a=[],c=this.head;do{a.push(c.val);c=c.next;}while(c!==this.head);return{ok:true,msg:`▶ ${a.join(" → ")} → [HEAD: ${a[0]}] (circular)`};}
+  toNodes(){if(!this.head)return[];let a=[],c=this.head;do{a.push({val:c.val,addr:c.addr,next:c.next.addr});c=c.next;}while(c!==this.head);return a;}
+}
+
+// ── Level config ──
+const LEVELS=[
+  {
+    id:1,type:"singly",name:"SINGLY LINKED LIST",color:C.nbc,
+    theory:"Each node has:\n• DATA FIELD: stores the value\n• POINTER FIELD: stores address of next node\n• Last node points to NULL",
+    challenges:[
+      {id:"1A",title:"FIRST CHAIN",desc:"Build: 10 → 20 → 30 → NULL\nThen search for 20.",hint:"insert(10); insert(20); insert(30); search(20);",check:(ll)=>ll.toNodes().map(n=>n.val).join()===("10,20,30")},
+      {id:"1B",title:"HEAD INSERT & DELETE",desc:"Insert 5 at head, 99 at tail.\nDelete node with value 5.",hint:"insertHead(5); insert(99); delete(5);",check:(ll)=>{const a=ll.toNodes().map(n=>n.val);return a[0]===99&&!a.includes(5);}},
+    ]
+  },
+  {
+    id:2,type:"doubly",name:"DOUBLY LINKED LIST",color:C.teal,
+    theory:"Each node has:\n• LEFT POINTER: address of predecessor (prev)\n• DATA FIELD: stores the value\n• RIGHT POINTER: address of next node\n• First node LEFT = NULL\n• Last node RIGHT = NULL",
+    challenges:[
+      {id:"2A",title:"BUILD DOUBLY",desc:"Build doubly list: 1 ↔ 2 ↔ 3\nVerify with display().",hint:"insert(1); insert(2); insert(3); display();",check:(ll)=>ll.toNodes().map(n=>n.val).join()===("1,2,3")},
+      {id:"2B",title:"BIDIRECTIONAL OPS",desc:"Build: 10 ↔ 20 ↔ 30\nDelete 20. Then count().",hint:"insert(10); insert(20); insert(30); delete(20); count();",check:(ll)=>{const a=ll.toNodes().map(n=>n.val);return !a.includes(20)&&a.includes(10)&&a.includes(30);}},
+    ]
+  },
+  {
+    id:3,type:"circular",name:"CIRCULAR LINKED LIST",color:C.acc,
+    theory:"Like singly but:\n• Last node's pointer = address of FIRST node (HEAD)\n• No NULL at the end — it loops!\n• Tail → HEAD creates a ring",
+    challenges:[
+      {id:"3A",title:"MAKE THE RING",desc:"Build circular list: 5 → 10 → 15 → [HEAD]\nUse display() to confirm circular.",hint:"insert(5); insert(10); insert(15); display();",check:(ll)=>ll.toNodes().map(n=>n.val).join()===("5,10,15")},
+      {id:"3B",title:"RING SURGERY",desc:"Build 1→2→3→[HEAD]\nDelete 2. Search for 3.",hint:"insert(1); insert(2); insert(3); delete(2); search(3);",check:(ll)=>{const a=ll.toNodes().map(n=>n.val);return !a.includes(2)&&a.includes(3);}},
+    ]
+  }
+];
+
+// ── App state ──
+let level=0; // 0=singly, 1=doubly, 2=circular
+let challenge=0;
+let ll=new SLL();
+let logs=[];
+let mode="drag";
+let hlVal=null;hlColor=C.ok;
+let hlTimer=null;
+let particles=[];
+let tick=0;
+let animId=null;
+let completedMap={};
+let score=0;
+let dragging=null;
+
+function mkLL(t){if(t==="singly")return new SLL();if(t==="doubly")return new DLL();return new CLL();}
+
+function addLog(r){logs.push(r);if(logs.length>50)logs.shift();const el=document.getElementById("logpanel");if(el){el.innerHTML=logs.map(l=>`<div style="color:${l.ok?C.ok:C.err};font-size:9px;font-family:'Courier New',monospace;margin-bottom:2px;">&gt; ${l.msg}</div>`).join("");el.scrollTop=el.scrollHeight;}}
+
+function execOp(op,val){
+  const lv=LEVELS[level];
+  const next=ll.clone();
+  let r;
+  if(op==="insert-tail")r=next.insertTail(val);
+  else if(op==="insert-head")r=next.insertHead(val);
+  else if(op==="delete")r=next.delete(val);
+  else if(op==="search"){r=next.search(val);hlVal=val;hlColor=r.ok?C.ok:C.err;if(hlTimer)clearTimeout(hlTimer);hlTimer=setTimeout(()=>{hlVal=null;},2500);}
+  else if(op==="count")r=next.count();
+  else if(op==="display")r=next.display();
+  else r={ok:false,msg:"Unknown op"};
+  ll=next;
+  addLog(r);
+  spawnP(r.ok);
+  checkChallenge();
+  renderStats();
+}
+
+function execBatch(ops){
+  const next=ll.clone();
+  ops.forEach(({op,val})=>{
+    let r;
+    if(op==="insert-tail")r=next.insertTail(val);
+    else if(op==="insert-head")r=next.insertHead(val);
+    else if(op==="delete")r=next.delete(val);
+    else if(op==="search"){r=next.search(val);hlVal=val;hlColor=r.ok?C.ok:C.err;if(hlTimer)clearTimeout(hlTimer);hlTimer=setTimeout(()=>{hlVal=null;},2500);}
+    else if(op==="count")r=next.count();
+    else if(op==="display")r=next.display();
+    else r={ok:false,msg:"Unknown"};
+    addLog(r);
+  });
+  ll=next;
+  spawnP(true);
+  checkChallenge();
+  renderStats();
+}
+
+function checkChallenge(){
+  const lv=LEVELS[level];const ch=lv.challenges[challenge];
+  const key=ch.id;
+  if(!completedMap[key]&&ch.check(ll)){
+    completedMap[key]=true;score+=100;
+    addLog({ok:true,msg:`★ ${ch.id} COMPLETE! +100 XP — Score: ${score}`});
+    renderHeader();renderChallenge();
+  }
+}
+
+function spawnP(ok){for(let i=0;i<10;i++)particles.push({x:340+(Math.random()-.5)*300,y:150,vx:(Math.random()-.5)*6,vy:(Math.random()-2.5)*5,life:1,color:ok?C.ok:C.err,size:Math.random()*5+2});}
+
+// ── Canvas ──
+function initCanvas(){
+  const cv=document.getElementById("llcv");if(!cv)return;
+  const ctx=cv.getContext("2d");const W=cv.width,H=cv.height;
+  function drawText(t,x,y,sz,col,align="center"){ctx.font=`${sz}px ${PF}`;ctx.fillStyle=col;ctx.textAlign=align;ctx.fillText(t,x,y);}
+  function drawArrow(x1,y1,x2,y2,col,dash=false){ctx.strokeStyle=col;ctx.lineWidth=2;if(dash)ctx.setLineDash([4,3]);else ctx.setLineDash([]);ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.setLineDash([]);const a=Math.atan2(y2-y1,x2-x1);ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-9*Math.cos(a-.42),y2-9*Math.sin(a-.42));ctx.lineTo(x2-9*Math.cos(a+.42),y2-9*Math.sin(a+.42));ctx.closePath();ctx.fill();}
+  function drawCurvedArrow(x1,y1,x2,y2,col,bend=-35){ctx.strokeStyle=col;ctx.lineWidth=2;ctx.setLineDash([]);const mx=(x1+x2)/2,my=Math.min(y1,y2)+bend;ctx.beginPath();ctx.moveTo(x1,y1);ctx.quadraticCurveTo(mx,my,x2,y2);ctx.stroke();const a=Math.atan2(y2-my,x2-mx);ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-9*Math.cos(a-.42),y2-9*Math.sin(a-.42));ctx.lineTo(x2-9*Math.cos(a+.42),y2-9*Math.sin(a+.42));ctx.closePath();ctx.fill();}
+
+  if(animId)cancelAnimationFrame(animId);
+  function frame(){
+    tick++;
+    ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle="#111130";ctx.lineWidth=.5;
+    for(let x=0;x<W;x+=20){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(let y=0;y<H;y+=20){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+    // header bar
+    ctx.fillStyle="#0c0c22";ctx.fillRect(0,0,W,30);
+    ctx.strokeStyle=LEVELS[level].color;ctx.lineWidth=1;ctx.strokeRect(0,0,W,30);
+    drawText(LEVELS[level].name,W/2,19,7,LEVELS[level].color);
+    const lv=LEVELS[level];
+    const t=lv.type;
+    if(t==="singly") drawSingly(ctx,drawText,drawArrow,W,H);
+    else if(t==="doubly") drawDoubly(ctx,drawText,drawArrow,W,H);
+    else drawCircular(ctx,drawText,drawArrow,drawCurvedArrow,W,H);
+    // particles
+    for(let i=particles.length-1;i>=0;i--){
+      const p=particles[i];p.x+=p.vx;p.y+=p.vy;p.vy+=.2;p.life-=.025;
+      if(p.life<=0){particles.splice(i,1);continue;}
+      ctx.globalAlpha=p.life;ctx.fillStyle=p.color;ctx.fillRect(Math.round(p.x),Math.round(p.y),Math.round(p.size),Math.round(p.size));ctx.globalAlpha=1;
+    }
+    animId=requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+function drawSingly(ctx,drawText,drawArrow,W,H){
+  const nodes=ll.toNodes();
+  const NW=80,NH=50,GAP=56;
+  if(nodes.length===0){
+    drawText("[ EMPTY LIST ]",W/2,H/2-5,8,"#334466");
+    drawText("NULL",W/2,H/2+22,9,C.nl);return;
+  }
+  const tw=nodes.length*(NW+GAP)-GAP;
+  const sx=Math.max(12,(W-tw)/2);const by=H/2-NH/2+5;
+  // HEAD label
+  const hx=sx+NW*0.38;
+  drawText("HEAD",hx,by-24,6,C.teal);
+  ctx.strokeStyle=C.teal;ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(hx,by-14);ctx.lineTo(hx,by);ctx.stroke();ctx.setLineDash([]);
+  nodes.forEach((n,i)=>{
+    const x=sx+i*(NW+GAP),y=by;
+    const isHL=n.val===hlVal;
+    const bc=isHL?hlColor:C.nbc;
+    // address above node
+    drawText(n.addr,x+NW/2,y-8,5,"#4a6a8a");
+    // value compartment (60%)
+    ctx.fillStyle=isHL?"#0a2a0a":C.nb;ctx.fillRect(x,y,NW*.60,NH);
+    ctx.strokeStyle=bc;ctx.lineWidth=2;ctx.strokeRect(x,y,NW*.60,NH);
+    drawText("DATA",x+NW*.30,y+13,5,isHL?bc:"#4a6a9a");
+    drawText(String(n.val),x+NW*.30,y+32,12,isHL?bc:C.nt);
+    // pointer compartment (40%)
+    ctx.fillStyle="#0e1e36";ctx.fillRect(x+NW*.62,y,NW*.38,NH);
+    ctx.strokeStyle=bc;ctx.lineWidth=2;ctx.strokeRect(x+NW*.62,y,NW*.38,NH);
+    drawText("NEXT",x+NW*.81,y+13,5,"#5a7aaa");
+    drawText(n.next==="NULL"?"NULL":n.next.slice(0,6),x+NW*.81,y+30,5,C.ptr);
+    // arrow to next
+    if(i<nodes.length-1)drawArrow(x+NW,y+NH/2,x+NW+GAP-2,y+NH/2,C.ptr);
+    // NULL cap
+    if(i===nodes.length-1){
+      const nx=x+NW+10;ctx.strokeStyle=C.ptr;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x+NW,y+NH/2);ctx.lineTo(nx,y+NH/2);ctx.stroke();
+      ctx.fillStyle="#220011";ctx.fillRect(nx,y+10,36,NH-20);ctx.strokeStyle=C.nl;ctx.lineWidth=2;ctx.strokeRect(nx,y+10,36,NH-20);
+      drawText("∅",nx+18,y+NH/2+4,10,C.nl);
+    }
+    drawText("["+i+"]",x+NW*.30,y+NH+13,5,"#445566");
+  });
+}
+
+function drawDoubly(ctx,drawText,drawArrow,W,H){
+  const nodes=ll.toNodes();
+  const NW=96,NH=56,GAP=48;
+  if(nodes.length===0){drawText("[ EMPTY DOUBLY LIST ]",W/2,H/2-5,7,"#334466");drawText("NULL ↔ NULL",W/2,H/2+22,8,C.nl);return;}
+  const tw=nodes.length*(NW+GAP)-GAP;
+  const sx=Math.max(8,(W-tw)/2);const by=H/2-NH/2+8;
+  // NULL on left
+  ctx.fillStyle="#220011";ctx.fillRect(sx-44,by+10,36,NH-20);ctx.strokeStyle=C.nl;ctx.lineWidth=2;ctx.strokeRect(sx-44,by+10,36,NH-20);
+  drawText("∅",sx-26,by+NH/2+4,10,C.nl);
+  drawArrow(sx-8,by+NH/2-6,sx-1,by+NH/2-6,C.prev);
+  nodes.forEach((n,i)=>{
+    const x=sx+i*(NW+GAP),y=by;
+    const isHL=n.val===hlVal;
+    const bc=isHL?hlColor:C.teal;
+    // address above
+    drawText(n.addr,x+NW/2,y-8,5,"#4a7a6a");
+    // prev pointer (25%)
+    ctx.fillStyle="#0e1e2e";ctx.fillRect(x,y,NW*.25,NH);ctx.strokeStyle=C.prev;ctx.lineWidth=2;ctx.strokeRect(x,y,NW*.25,NH);
+    drawText("PREV",x+NW*.125,y+14,4,C.prev);
+    drawText(n.prev==="NULL"?"NULL":n.prev.slice(0,4),x+NW*.125,y+30,4,C.prev);
+    // data (50%)
+    ctx.fillStyle=isHL?"#0a2a1a":C.nb;ctx.fillRect(x+NW*.26,y,NW*.48,NH);ctx.strokeStyle=bc;ctx.lineWidth=2;ctx.strokeRect(x+NW*.26,y,NW*.48,NH);
+    drawText("DATA",x+NW*.50,y+14,5,isHL?bc:"#4a8a8a");
+    drawText(String(n.val),x+NW*.50,y+34,13,isHL?bc:C.nt);
+    // next pointer (25%)
+    ctx.fillStyle="#0a1e30";ctx.fillRect(x+NW*.75,y,NW*.25,NH);ctx.strokeStyle=bc;ctx.lineWidth=2;ctx.strokeRect(x+NW*.75,y,NW*.25,NH);
+    drawText("NEXT",x+NW*.875,y+14,4,"#5a9aaa");
+    drawText(n.next==="NULL"?"NULL":n.next.slice(0,4),x+NW*.875,y+30,4,C.ptr);
+    // arrows between nodes
+    if(i<nodes.length-1){
+      // forward arrow
+      drawArrow(x+NW,y+NH/2-6,x+NW+GAP-2,y+NH/2-6,C.ptr);
+      // backward arrow
+      drawArrow(x+NW+GAP-2,y+NH/2+6,x+NW,y+NH/2+6,C.prev);
+    }
+    if(i===nodes.length-1){
+      const nx=x+NW+10;ctx.strokeStyle=C.ptr;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x+NW,y+NH/2-6);ctx.lineTo(nx,y+NH/2-6);ctx.stroke();
+      ctx.fillStyle="#220011";ctx.fillRect(nx,y+10,36,NH-20);ctx.strokeStyle=C.nl;ctx.lineWidth=2;ctx.strokeRect(nx,y+10,36,NH-20);
+      drawText("∅",nx+18,y+NH/2+4,10,C.nl);
+    }
+    drawText("["+i+"]",x+NW*.50,y+NH+13,5,"#445566");
+  });
+}
+
+function drawCircular(ctx,drawText,drawArrow,drawCurvedArrow,W,H){
+  const nodes=ll.toNodes();
+  const NW=80,NH=50,GAP=52;
+  if(nodes.length===0){drawText("[ EMPTY CIRCULAR LIST ]",W/2,H/2-5,7,"#334466");return;}
+  const tw=nodes.length*(NW+GAP)-GAP;
+  const sx=Math.max(12,(W-tw)/2);const by=H/2-NH/2+12;
+  nodes.forEach((n,i)=>{
+    const x=sx+i*(NW+GAP),y=by;
+    const isHL=n.val===hlVal;
+    const bc=isHL?hlColor:C.acc;
+    drawText(n.addr,x+NW/2,y-8,5,"#6a4a8a");
+    ctx.fillStyle=isHL?"#1a0a2a":"#1a1a3a";ctx.fillRect(x,y,NW*.60,NH);ctx.strokeStyle=bc;ctx.lineWidth=2;ctx.strokeRect(x,y,NW*.60,NH);
+    drawText("DATA",x+NW*.30,y+13,5,isHL?bc:"#6a5a9a");
+    drawText(String(n.val),x+NW*.30,y+32,12,isHL?bc:C.nt);
+    ctx.fillStyle="#150e28";ctx.fillRect(x+NW*.62,y,NW*.38,NH);ctx.strokeStyle=bc;ctx.lineWidth=2;ctx.strokeRect(x+NW*.62,y,NW*.38,NH);
+    drawText("NEXT",x+NW*.81,y+13,5,"#8a6aaa");
+    drawText(n.next.slice(0,6),x+NW*.81,y+30,5,C.pur);
+    if(i<nodes.length-1){drawArrow(x+NW,y+NH/2,x+NW+GAP-2,y+NH/2,C.acc);}
+    drawText("["+i+"]",x+NW*.30,y+NH+13,5,"#445566");
+  });
+  // circular back-arrow from last to first
+  if(nodes.length>1){
+    const lx=sx+(nodes.length-1)*(NW+GAP)+NW;const ly=by+NH/2;
+    const fx=sx;const fy=by+NH/2;
+    // arc over top
+    ctx.strokeStyle=C.pur;ctx.lineWidth=2;ctx.setLineDash([5,3]);
+    ctx.beginPath();ctx.moveTo(lx,ly-10);ctx.bezierCurveTo(lx+20,by-50,fx-20,by-50,fx,fy-10);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=C.pur;ctx.beginPath();const a2=Math.atan2(-10,-20);ctx.moveTo(fx,fy-10);ctx.lineTo(fx-8*Math.cos(a2-.4),fy-10-8*Math.sin(a2-.4));ctx.lineTo(fx-8*Math.cos(a2+.4),fy-10-8*Math.sin(a2+.4));ctx.closePath();ctx.fill();
+    drawText("→ HEAD",W/2,by-54,6,C.pur);
+  } else if(nodes.length===1){
+    // self-loop
+    const x=sx;const y=by;
+    ctx.strokeStyle=C.pur;ctx.lineWidth=2;ctx.setLineDash([4,3]);
+    ctx.beginPath();ctx.arc(x+NW*.81,y-14,14,0.5,2.6);ctx.stroke();ctx.setLineDash([]);
+    drawText("↺ self",x+NW*.81,y-32,5,C.pur);
+  }
+}
+
+// ── UI renderers ──
+function renderHeader(){
+  const el=document.getElementById("hdr");if(!el)return;
+  const done=Object.keys(completedMap).length;
+  const total=LEVELS.reduce((a,l)=>a+l.challenges.length,0);
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 12px;background:${C.panel};border:2px solid ${C.pb};border-radius:2px;">
+      <div style="font-size:8px;color:${C.gold};letter-spacing:1px;">⬡ LINKED LIST QUEST v2</div>
+      <div style="display:flex;gap:14px;align-items:center;">
+        <span style="font-size:7px;color:${C.teal};">SCORE: ${score}</span>
+        <span style="font-size:7px;color:${C.pur};">${done}/${total} DONE</span>
+      </div>
+    </div>`;
+}
+
+function renderLevelTabs(){
+  const el=document.getElementById("lvltabs");if(!el)return;
+  el.innerHTML=LEVELS.map((lv,i)=>{
+    const done=lv.challenges.every(c=>completedMap[c.id]);
+    const act=level===i;
+    return `<button class="tab-btn" onclick="switchLevel(${i})" style="flex:1;padding:7px 4px;font-size:6px;background:${act?lv.color+"22":"transparent"};border-bottom:${act?`3px solid ${lv.color}`:`1px solid ${C.pb}`};color:${done?C.ok:act?lv.color:"#445566"};letter-spacing:1px;">${done?"★ ":""}LV${lv.id}: ${lv.id===1?"SINGLY":lv.id===2?"DOUBLY":"CIRCULAR"}</button>`;
+  }).join("");
+}
+
+function renderTheory(){
+  const el=document.getElementById("theorypanel");if(!el)return;
+  const lv=LEVELS[level];
+  el.innerHTML=`
+    <div style="background:#090920;border:2px solid ${lv.color}44;border-radius:2px;padding:10px;">
+      <div style="font-size:6px;color:${lv.color};margin-bottom:6px;letter-spacing:1px;">📖 THEORY: ${lv.name}</div>
+      <div style="font-size:7px;color:#99aacc;line-height:2;white-space:pre-line;">${lv.theory}</div>
+    </div>`;
+}
+
+function renderChallenge(){
+  const el=document.getElementById("qpanel");if(!el)return;
+  const lv=LEVELS[level];const ch=lv.challenges[challenge];
+  const done=completedMap[ch.id];
+  const nav=lv.challenges.map((c,i)=>`<button class="btn" onclick="switchChallenge(${i})" style="padding:4px 7px;font-size:5px;background:${completedMap[c.id]?C.ok+"22":challenge===i?lv.color+"22":"transparent"};border:1px solid ${completedMap[c.id]?C.ok:challenge===i?lv.color:C.pb};color:${completedMap[c.id]?C.ok:challenge===i?lv.color:"#445566"};">${completedMap[c.id]?"★":""} ${c.id}</button>`).join("");
+  el.innerHTML=`
+    <div style="background:#0a0a20;border:2px solid ${done?C.ok:C.gold};border-radius:2px;padding:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;">
+        <div style="font-size:6px;color:${C.gold};">◆ CHALLENGE ${ch.id}: ${ch.title}</div>
+        <div style="display:flex;gap:4px;">${nav}</div>
+      </div>
+      <div style="font-size:7px;color:#aabbcc;line-height:2;white-space:pre-line;margin-bottom:8px;">${ch.desc}</div>
+      <div style="font-size:6px;color:#667788;border-top:1px solid #222244;padding-top:6px;">💡 ${ch.hint}</div>
+      ${done?`<div style="margin-top:8px;font-size:7px;color:${C.ok};background:#001a00;border:1px solid ${C.ok};padding:6px;text-align:center;">★ CHALLENGE COMPLETE! +100 XP ★</div>`:""}
+    </div>`;
+}
+
+function renderControls(){
+  const el=document.getElementById("ctrlpanel");if(!el)return;
+  const lv=LEVELS[level];
+  el.innerHTML=`
+    <div style="background:${C.panel};border:2px solid ${C.pb};border-radius:2px;padding:10px;">
+      <div style="display:flex;margin-bottom:10px;border:1px solid ${C.pb};border-radius:2px;overflow:hidden;">
+        <button class="tab-btn" id="mb-drag" onclick="setMode('drag')" style="flex:1;padding:7px;font-size:6px;background:${mode==="drag"?"#1a2a4a":"transparent"};color:${mode==="drag"?C.nbc:"#445566"};">⊞ DRAG-DROP</button>
+        <button class="tab-btn" id="mb-code" onclick="setMode('code')" style="flex:1;padding:7px;font-size:6px;background:${mode==="code"?"#1a2a4a":"transparent"};border-left:1px solid ${C.pb};color:${mode==="code"?C.nbc:"#445566"};">⌨ CODE</button>
+      </div>
+      <div id="iface"></div>
+      <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;">
+        ${[{l:"NODES",v:ll.size,c:C.teal},{l:"HEAD",v:ll.head?ll.head.val:"∅",c:lv.color},{l:"OPS",v:logs.length,c:C.pur}].map(s=>`
+          <div style="background:#080818;border:1px solid ${s.c}44;border-radius:2px;padding:5px;text-align:center;">
+            <div style="font-size:5px;color:#445566;margin-bottom:2px;">${s.l}</div>
+            <div id="stat-${s.l.toLowerCase()}" style="font-size:11px;color:${s.c};">${s.v}</div>
+          </div>`).join("")}
+      </div>
+    </div>`;
+  renderInterface();
+}
+
+function renderStats(){
+  const sn=document.getElementById("stat-nodes");if(sn)sn.textContent=ll.size;
+  const sh=document.getElementById("stat-head");if(sh)sh.textContent=ll.head?ll.head.val:"∅";
+  const so=document.getElementById("stat-ops");if(so)so.textContent=logs.length;
+}
+
+function renderInterface(){
+  const el=document.getElementById("iface");if(!el)return;
+  const lv=LEVELS[level];
+  if(mode==="drag"){
+    const ops=[
+      {id:"insert-tail",label:"INSERT TAIL",icon:"→",color:"#1a4a2a",border:C.ok},
+      {id:"insert-head",label:"INSERT HEAD",icon:"←",color:"#1a2a4a",border:C.cyan},
+      {id:"delete",label:"DELETE",icon:"✕",color:"#4a1a1a",border:C.err},
+      {id:"search",label:"SEARCH",icon:"?",color:"#2a1a4a",border:C.pur},
+      {id:"count",label:"COUNT",icon:"#",color:"#2a2a1a",border:C.gold},
+      {id:"display",label:"DISPLAY",icon:"▶",color:"#1a2a2a",border:lv.color},
+    ];
+    el.innerHTML=`
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
+        <div><div style="font-size:5px;color:#8888aa;margin-bottom:3px;">VALUE (insert/delete)</div>
+        <input id="dd-val" type="number" value="10" style="width:100%;background:#050510;border:1px solid ${C.pb};color:${C.nt};font-family:${PF};font-size:9px;padding:5px;border-radius:2px;"></div>
+        <div><div style="font-size:5px;color:#8888aa;margin-bottom:3px;">SEARCH VALUE</div>
+        <input id="dd-sv" type="number" value="10" style="width:100%;background:#050510;border:1px solid ${C.pb};color:${C.nt};font-family:${PF};font-size:9px;padding:5px;border-radius:2px;"></div>
+      </div>
+      <div style="font-size:5px;color:#446688;margin-bottom:5px;">▼ CLICK TO EXECUTE · DRAG TO DROP ZONE</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:6px;">
+        ${ops.map(op=>`<div class="btn op-blk" data-id="${op.id}" draggable="true" style="background:${op.color};border:2px solid ${op.border};border-radius:2px;padding:7px 3px;text-align:center;user-select:none;">
+          <div style="font-size:13px;color:${op.border};margin-bottom:2px;">${op.icon}</div>
+          <div style="font-size:5px;color:${op.border};line-height:1.5;">${op.label}</div>
+        </div>`).join("")}
+      </div>
+      <div id="dropzone" style="border:2px dashed ${C.pb};border-radius:2px;padding:9px;text-align:center;font-size:6px;color:#445566;transition:all 0.12s;">DROP BLOCK HERE</div>`;
+    const dv=()=>parseInt(document.getElementById("dd-val")?.value)||0;
+    const sv=()=>parseInt(document.getElementById("dd-sv")?.value)||0;
+    function doOp(id){if(id==="count")execOp("count",null);else if(id==="display")execOp("display",null);else if(id==="search")execOp("search",sv());else execOp(id,dv());}
+    document.querySelectorAll(".op-blk").forEach(b=>{
+      b.onclick=()=>doOp(b.dataset.id);
+      b.ondragstart=()=>{dragging=b.dataset.id;b.style.opacity=".6";};
+      b.ondragend=()=>{dragging=null;b.style.opacity="1";};
+    });
+    const dz=document.getElementById("dropzone");
+    dz.ondragover=e=>{e.preventDefault();dz.style.border=`2px dashed ${C.ok}`;dz.style.color=C.ok;dz.style.background="#001a00";dz.textContent="▼ DROP TO EXECUTE";};
+    dz.ondragleave=()=>{dz.style.border=`2px dashed ${C.pb}`;dz.style.color="#445566";dz.style.background="transparent";dz.textContent="DROP BLOCK HERE";};
+    dz.ondrop=e=>{e.preventDefault();dz.style.border=`2px dashed ${C.pb}`;dz.style.color="#445566";dz.style.background="transparent";dz.textContent="DROP BLOCK HERE";if(dragging)doOp(dragging);};
+  } else {
+    el.innerHTML=`
+      <div style="font-size:5px;color:#557799;margin-bottom:3px;line-height:1.8;">// insert(v) · insertHead(v) · delete(v) · search(v) · count() · display()</div>
+      <textarea id="codeinput" style="width:100%;height:130px;background:#040410;border:1px solid ${C.pb};color:#88ccff;font-family:'Courier New',monospace;font-size:11px;padding:8px;border-radius:2px;resize:none;line-height:1.6;box-sizing:border-box;">insert(10);
+insert(20);
+insert(30);
+display();</textarea>
+      <div id="cerr" style="display:none;font-size:6px;color:${C.err};padding:4px 6px;background:#200000;border:1px solid ${C.err};margin-top:3px;"></div>
+      <button class="btn" onclick="runCode()" style="margin-top:6px;width:100%;background:#002200;border:2px solid ${C.ok};color:${C.ok};font-family:${PF};font-size:7px;padding:7px;">▶ RUN CODE</button>`;
+  }
+}
+
+window.runCode=function(){
+  const src=document.getElementById("codeinput")?.value||"";
+  const cerr=document.getElementById("cerr");if(cerr)cerr.style.display="none";
+  try{
+    if(/eval|Function|window|document|fetch|import|require|process|global|__proto__|prototype|constructor/gi.test(src))throw new Error("Forbidden keyword");
+    const ops=[];
+    const fns={insert:v=>ops.push({op:"insert-tail",val:Number(v)}),insertTail:v=>ops.push({op:"insert-tail",val:Number(v)}),insertHead:v=>ops.push({op:"insert-head",val:Number(v)}),delete:v=>ops.push({op:"delete",val:Number(v)}),search:v=>ops.push({op:"search",val:Number(v)}),count:()=>ops.push({op:"count",val:null}),display:()=>ops.push({op:"display",val:null})};
+    new Function(...Object.keys(fns),src)(...Object.values(fns));
+    execBatch(ops);
+  }catch(e){if(cerr){cerr.style.display="block";cerr.textContent="⚠ "+e.message;}}
+};
+
+window.switchLevel=function(i){
+  level=i;challenge=0;ll=mkLL(LEVELS[i].type);logs=[];particles=[];
+  renderAll();
+};
+window.switchChallenge=function(i){challenge=i;renderChallenge();};
+window.setMode=function(m){mode=m;renderControls();};
+window.resetLL=function(){ll=mkLL(LEVELS[level].type);logs=[];particles=[];addLog({ok:true,msg:"↺ List reset"});renderStats();};
+
+function renderAll(){
+  renderHeader();renderLevelTabs();renderTheory();renderChallenge();renderControls();
+  const lp=document.getElementById("logpanel");if(lp)lp.innerHTML=`<div style="color:#334455;font-size:9px;font-family:'Courier New',monospace;">&gt; Awaiting commands...</div>`;
+}
+
+// ── Bootstrap ──
+document.getElementById("root").innerHTML=`
+  <div id="hdr" style="margin-bottom:8px;"></div>
+  <div id="lvltabs" style="display:flex;border-bottom:1px solid ${C.pb};margin-bottom:8px;"></div>
+  <canvas id="llcv" width="700" height="210" style="width:100%;height:210px;image-rendering:pixelated;border-radius:2px;border:2px solid ${C.pb};display:block;margin-bottom:8px;"></canvas>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <div style="display:flex;flex-direction:column;gap:7px;">
+      <div id="theorypanel"></div>
+      <div id="qpanel"></div>
+      <div style="display:flex;gap:5px;align-items:center;">
+        <div style="font-size:5px;color:#446688;flex:1;">CONSOLE OUTPUT</div>
+        <button class="btn" onclick="resetLL()" style="background:#1a0a0a;border:1px solid ${C.err};color:${C.err};font-family:${PF};font-size:5px;padding:4px 7px;">↺ RESET</button>
+      </div>
+      <div id="logpanel" style="height:100px;overflow-y:auto;background:#040410;border:1px solid ${C.pb};border-radius:2px;padding:7px;"></div>
+    </div>
+    <div id="ctrlpanel"></div>
+  </div>
+  <div style="margin-top:8px;font-size:5px;color:#334455;text-align:center;letter-spacing:1px;">SINGLY · DOUBLY · CIRCULAR · LINKED LIST QUEST v2.0</div>
+`;
+
+renderAll();
+initCanvas();
+</script>
+</body>
+</html>

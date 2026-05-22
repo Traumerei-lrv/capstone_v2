@@ -1,0 +1,10 @@
+case 1 - lvl1
+	-> introduce fundamentals (what is dsa)
+	-> introduce recursion
+case 2 - lvl2
+	-> straight to dashboard?
+	-> initial test?
+	-> ?
+case 3 - lvl3 
+	-> proficiency test
+	-> ? 

@@ -1,0 +1,39 @@
+.dashboard-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top right, rgba(120, 184, 247, 0.35), transparent 40%),
+    linear-gradient(135deg, #eef7ff, #dbeefe 60%, #c9e3fd);
+}
+
+.dashboard-card {
+  width: min(560px, 100%);
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(31, 90, 159, 0.2);
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 16px 34px rgba(18, 56, 95, 0.14);
+}
+
+.dashboard-card h1 {
+  margin: 0 0 8px;
+  color: #104176;
+}
+
+.dashboard-card p {
+  margin: 8px 0;
+  color: #1f4d7c;
+}
+
+.dashboard-card button {
+  margin-top: 14px;
+  border: 0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #2d79d8, #6cb1ef);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}

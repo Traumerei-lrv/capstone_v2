@@ -1,0 +1,121 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global font-face declarations: edit these paths/names to change fonts */
+@font-face {
+  font-family: 'Ari';
+  src: url('./assets/fonts/ari-w9500.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'AriBold';
+  src: url('./assets/fonts/ari-w9500-bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Minecraft';
+  src: url('./assets/fonts/Minecraft.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Pixellari';
+  src: url('./assets/fonts/Pixellari.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'VCR';
+  src: url('./assets/fonts/VCR_OSD_MONO_1.001.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Utility classes to apply fonts across the app. Update names in fontConfig.js */
+.font-ari { font-family: var(--font-body); }
+.font-aribold { font-family: var(--font-heading); }
+.font-minecraft { font-family: var(--font-body); }
+.font-pixellari { font-family: var(--font-body); }
+.font-vcr { font-family: var(--font-body); }
+
+:root {
+  --font-body: 'Ari', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  --font-heading: 'AriBold', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  --font-mono: 'VCR', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.9), transparent 35%),
+    linear-gradient(135deg, #eef6ff 0%, #d9ebff 45%, #c9e0fb 100%);
+  color: #0f2f57;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+}
+
+code,
+kbd,
+samp,
+pre {
+  font-family: var(--font-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+/* Adventure button glow */
+.adventure-btn-container {
+  position: fixed;
+  /* bottom uses variable directly so authors can set exact spacing */
+  bottom: var(--adventure-bottom, 6rem);
+  left: var(--adventure-left, 50%);
+  transform: translateX(var(--adventure-translateX, -50%));
+  /* Manual width controlled by --adventure-width only */
+  width: var(--adventure-width, 140px);
+  pointer-events: auto;
+  z-index: var(--adventure-z, 1000000);
+}
+
+.adventure-btn {
+  display: block;
+  width: 100%;
+  height: auto;
+  transition: transform 160ms ease, box-shadow 200ms ease, filter 200ms ease;
+  will-change: transform, box-shadow, filter;
+}
+.adventure-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.16), 0 0 48px rgba(16,185,129,0.16);
+  filter: drop-shadow(0 0 20px rgba(16,185,129,0.45));
+}
+
+/* Responsiveness disabled for manual editing; remove or re-enable media queries if needed */

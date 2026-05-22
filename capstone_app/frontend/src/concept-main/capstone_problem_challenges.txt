@@ -1,0 +1,25 @@
+Recursion Problem For Challenges
+Problem Cited from a book:
+
+
+Problem 1- Given an array A indexed from p to q containing intergers, return the integer in A [p..q] with the maximum value.
+
+Problem 2- Given an array A indexed from 1 to containing intergers, determine how many integers in A [1..n] are greater than A[1].
+
+
+Among us scenario using cited problem as reference:
+
+
+Problem 1 - Reactor Temperature Scan
+
+Sample story: (Bali ara na sa ship)
+    Alert: Reactor overheating! 
+    The ship’s system stored temperature readings across different reactor sections.
+    You must scan a segment of the data to find the highest temperature before meltdown.
+    (So like sa problem 1 halin sa book instead of an Integer with the maximum value lets find the highest temperature)
+
+Sample task: 
+    Find the highest temperature between section p and q.
+
+Visualization: 
+    Bali may reactor pre tas daw ga scan lang nga animation ah 

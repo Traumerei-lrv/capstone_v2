@@ -1,0 +1,121 @@
+body {
+    margin: 0;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.cockpit {
+    position: relative;
+    /* The coordinates provided assume a fixed size for the cockpit image.
+       I'm assuming 1920x1080px. If your image is a different size,
+       you may need to adjust this and the hitbox positions. */
+    width: 1920px;
+    height: 1080px;
+    margin: auto;
+    transform: scale(0.8); /* Example scaling to fit on smaller screens */
+}
+
+.base {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* The image itself shouldn't be clickable */
+}
+
+.hover-outline {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+    pointer-events: none;
+}
+
+.screen-hitbox {
+    position: absolute;
+    left: 795px;
+    top: 240px;
+    width: 330px;
+    height: 200px;
+    cursor: pointer;
+    /* background: rgba(0, 255, 0, 0.3); */ /* for debugging */
+}
+
+.screen-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 10;
+}
+
+.screen-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    width: 800px;
+}
+
+.screen-popup img {
+    display: block;
+    width: 100%;
+}
+
+.screen-area {
+    position: absolute;
+    top: 10%;
+    left: 10%;
+    width: 80%;
+    height: 80%;
+}
+
+.wally-image {
+    width: 100px;
+}
+
+.hidden {
+    display: none;
+}
+
+/* New challenge hitboxes */
+.challenge-hitbox {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    cursor: pointer;
+    transform: translate(-50%, -50%);
+    /* background: rgba(255, 0, 0, 0.4); */ /* for debugging, uncomment to see them */
+    transition: background-color 0.2s;
+}
+
+.challenge-hitbox:hover {
+    background-color: rgba(0, 255, 255, 0.3);
+}
+
+#turbine-failure-hitbox {
+    left: 393px;
+    top: 581px;
+}
+
+#galaxy-hops-hitbox {
+    left: 611px;
+    top: 581px;
+}
+
+#over-heat-hitbox {
+    left: 840px;
+    top: 574px;
+}

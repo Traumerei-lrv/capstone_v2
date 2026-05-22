@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import useAuth from '../../../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { recordMissionAttempt, upsertMissionProgress } from '../../../../api/studentDashboard';
@@ -10,6 +10,15 @@ const STAGES = [
   { key: 'problem', label: 'Problem' },
   { key: 'post-test', label: 'Post-test' },
 ];
+
+const TOWER_LABELS = ['A', 'B', 'C'];
+
+function getRecursionPhaseLabel(phase) {
+  if (phase === 'return') return 'Return';
+  if (phase === 'base') return 'Base Case';
+  if (phase === 'move') return 'Move';
+  return 'Call';
+}
 
 function ChoiceList({ prompt, choices, selectedIndex, onSelect, accent, title, disabled = false }) {
   return (
@@ -64,6 +73,7 @@ function isUuid(value) {
 export default function MissionScaffold({ mission }) {
   const navigate = useNavigate();
   const [stageIndex, setStageIndex] = useState(0);
+  const [recursionStepIndex, setRecursionStepIndex] = useState(0);
   const preQuestions = mission.preTest.questions || [
     {
       prompt: mission.preTest.prompt,
@@ -95,6 +105,10 @@ export default function MissionScaffold({ mission }) {
   }, [stageIndex]);
 
   const currentStage = STAGES[stageIndex];
+  const isRecursionMission = mission.key === 'recursion';
+  const recursionVisualization = mission.recursionVisualization;
+  const recursionSteps = recursionVisualization?.steps || [];
+  const recursionFrameDuration = recursionVisualization?.frameDurationMs || 1400;
   const allPreTestAnswered = preAnswers.every((answer) => answer !== null);
   const preCorrectCount = preQuestions.reduce((count, question, index) => count + (preAnswers[index] === question.correctIndex ? 1 : 0), 0);
   const preScore = preTestSubmitted ? Math.round((preCorrectCount / preQuestions.length) * 100) : 0;
@@ -177,6 +191,25 @@ export default function MissionScaffold({ mission }) {
   const currentPreQuestion = preQuestions[preQuestionIndex];
   const isLastPreQuestion = preQuestionIndex === preQuestions.length - 1;
   const canGoNextPreQuestion = preAnswers[preQuestionIndex] !== null;
+
+  useEffect(() => {
+    const supportsRecursionPlayback = currentStage?.key === 'intro' || currentStage?.key === 'problem';
+    if (!supportsRecursionPlayback || !isRecursionMission || recursionSteps.length <= 1) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setRecursionStepIndex((current) => (current + 1) % recursionSteps.length);
+    }, recursionFrameDuration);
+
+    return () => window.clearInterval(intervalId);
+  }, [currentStage?.key, isRecursionMission, recursionFrameDuration, recursionSteps.length]);
+
+  useEffect(() => {
+    if (currentStage?.key !== 'intro' && currentStage?.key !== 'problem') {
+      setRecursionStepIndex(0);
+    }
+  }, [currentStage?.key]);
 
   function continueToProblem() {
     setStageIndex(2);
@@ -452,11 +485,56 @@ export default function MissionScaffold({ mission }) {
             <div className="grid gap-3 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
               <MissionShellCard title="Introduction" accent={mission.accent} eyebrow="Theory">
                 <p className="text-base leading-7 text-slate-700">{mission.introBlurb}</p>
+                {Array.isArray(mission.introMockData) && mission.introMockData.length > 0 ? (
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    {mission.introMockData.map((item) => (
+                      <div key={item.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">{item.label}</p>
+                        <p className="mt-2 text-base font-semibold text-slate-900">{item.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
                 <div className="mt-5 grid gap-3 rounded-[1.1rem] bg-slate-50 p-4 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
                   {mission.introPoints.map((point) => (
                     <div key={point} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm">{point}</div>
                   ))}
                 </div>
+                {isRecursionMission && recursionSteps.length > 0 ? (
+                  <div className="mt-5">
+                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Introduction Steps</p>
+                    <div className="mt-3 grid gap-3">
+                      {recursionSteps.map((step, index) => {
+                        const isActive = index === recursionStepIndex;
+                        const isPast = index < recursionStepIndex;
+                        const borderColor = isActive ? mission.accent : isPast ? `${mission.accent}88` : 'rgba(148,163,184,0.2)';
+                        const phaseStyle = getRecursionPhaseLabel(step.phase);
+                        return (
+                          <div
+                            key={`${step.label}-${index}`}
+                            className="rounded-2xl border bg-white px-4 py-3 shadow-sm transition-all duration-500"
+                            style={{
+                              borderColor,
+                              transform: isActive ? 'translateX(2px)' : 'translateX(0)',
+                              boxShadow: isActive ? `0 10px 24px ${mission.accent}22` : undefined,
+                            }}
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="flex items-center gap-2">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white" style={{ backgroundColor: mission.accent }}>
+                                  {index + 1}
+                                </div>
+                                <p className="text-sm font-semibold text-slate-800">{step.label}</p>
+                              </div>
+                              <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">{phaseStyle}</span>
+                            </div>
+                            <p className="mt-2 text-xs leading-6 text-slate-600">{step.caption}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
               </MissionShellCard>
 
               <div className="flex flex-col gap-3">
@@ -465,18 +543,72 @@ export default function MissionScaffold({ mission }) {
                   <div className="mt-5 rounded-[1.25rem] border border-dashed p-5" style={{ borderColor: `${mission.accent}66`, backgroundColor: `${mission.accent}10` }}>
                     <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
                       <span>Visualization Area</span>
-                      <span>Topic Flow</span>
+                      <span>{isRecursionMission ? 'Auto-play Flow' : 'Topic Flow'}</span>
                     </div>
-                    <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                      {mission.visualNodes.map((node, index) => (
-                        <div key={node} className="rounded-2xl border bg-white p-4 text-center shadow-sm" style={{ borderColor: index === 0 ? mission.accent : 'rgba(148,163,184,0.18)' }}>
-                          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full text-sm font-bold text-white" style={{ backgroundColor: mission.accent }}>
-                            {index + 1}
-                          </div>
-                          <p className="mt-3 text-sm font-semibold text-slate-800">{node}</p>
+                    {isRecursionMission && recursionSteps.length > 0 ? (
+                      <div className="mt-5 space-y-4">
+                        <div className="rounded-2xl border border-white/60 bg-white/80 px-4 py-3 shadow-sm">
+                          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Sample Function</p>
+                          <p className="mt-1 text-sm font-semibold text-slate-800">
+                            {recursionVisualization?.functionLabel || 'factorial(n)'} with n = {recursionVisualization?.inputValue ?? 4}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-600">
+                            Step {recursionStepIndex + 1} of {recursionSteps.length}: {recursionSteps[recursionStepIndex]?.caption}
+                          </p>
                         </div>
-                      ))}
-                    </div>
+
+                        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+                          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Tower Of Hanoi State</p>
+                          <p className="mt-2 text-xs leading-5 text-slate-600">Current recursion frame visualized as tower positions.</p>
+                          {recursionSteps[recursionStepIndex]?.pegs ? (
+                            <div className="mt-4 grid grid-cols-3 gap-3">
+                              {TOWER_LABELS.map((tower) => {
+                                const disks = recursionSteps[recursionStepIndex]?.pegs?.[tower] || [];
+                                return (
+                                  <div key={tower} className="rounded-xl border border-slate-200 bg-slate-50 px-3 pb-3 pt-2">
+                                    <p className="text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Tower {tower}</p>
+                                    <div className="mt-2 flex h-28 flex-col-reverse items-center gap-1 rounded-lg border border-dashed border-slate-200 bg-white p-2">
+                                      <div className="h-[3px] w-12 rounded-full bg-slate-400" />
+                                      {disks.map((disk) => (
+                                        <div
+                                          key={`${tower}-disk-${disk}`}
+                                          className="h-3 rounded-full"
+                                          style={{
+                                            width: `${18 + disk * 12}px`,
+                                            backgroundColor: disk === 3 ? '#1d4ed8' : disk === 2 ? '#60a5fa' : '#93c5fd',
+                                          }}
+                                        />
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : null}
+                        </div>
+
+                        <div className="h-2 rounded-full bg-white/80 p-[2px]">
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${Math.round(((recursionStepIndex + 1) / recursionSteps.length) * 100)}%`,
+                              backgroundColor: mission.accent,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                        {mission.visualNodes.map((node, index) => (
+                          <div key={node} className="rounded-2xl border bg-white p-4 text-center shadow-sm" style={{ borderColor: index === 0 ? mission.accent : 'rgba(148,163,184,0.18)' }}>
+                            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full text-sm font-bold text-white" style={{ backgroundColor: mission.accent }}>
+                              {index + 1}
+                            </div>
+                            <p className="mt-3 text-sm font-semibold text-slate-800">{node}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </MissionShellCard>
 
@@ -499,60 +631,105 @@ export default function MissionScaffold({ mission }) {
           ) : null}
 
           {currentStage?.key === 'problem' ? (
-            <div className='grid gap-3'>
-              <MissionShellCard title={mission.problem?.title || 'Problem'} accent={mission.accent} eyebrow='Challenge'>
-                <p className='text-base leading-7 text-slate-700'>{mission.problem?.prompt}</p>
-                <div className='mt-5 rounded-[1.2rem] border border-slate-200 bg-slate-50 p-4'>
-                  <p className='text-xs font-semibold uppercase tracking-[0.24em] text-slate-400'>Hint</p>
-                  <p className='mt-2 text-sm leading-6 text-slate-600'>{mission.problem?.hint}</p>
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+              <MissionShellCard title={mission.problem?.title || 'Problem'} accent={mission.accent} eyebrow="Challenge">
+                <p className="text-base leading-7 text-slate-700">{mission.problem?.prompt}</p>
+                <div className="mt-5 rounded-[1.2rem] border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Hint</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{mission.problem?.hint}</p>
                 </div>
-                <div className='mt-4 grid gap-3 rounded-[1.1rem] bg-slate-50 p-4'>
-                  <div className='rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm'>
+                <div className="mt-4 grid gap-3 rounded-[1.1rem] bg-slate-50 p-4">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm">
                     Input: small topic-specific example will be provided by the instructor.
                   </div>
-                  <div className='rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm'>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm">
                     Goal: finish the starter code so it solves the challenge.
                   </div>
                 </div>
                 {problemSubmitted ? (
-                  <div className='mt-4 rounded-[1.2rem] border border-slate-200 bg-white px-4 py-4 shadow-sm'>
-                    <p className='text-xs font-semibold uppercase tracking-[0.26em] text-slate-400'>Problem result</p>
-                    <p className='mt-1 text-lg font-semibold text-slate-900'>{problemResult?.score || 0}%</p>
-                    <p className='text-sm text-slate-600'>{problemResult?.solved ? 'Correct enough to continue.' : mission.problem?.solutionNote}</p>
+                  <div className="mt-4 rounded-[1.2rem] border border-slate-200 bg-white px-4 py-4 shadow-sm">
+                    <p className="text-xs font-semibold uppercase tracking-[0.26em] text-slate-400">Problem result</p>
+                    <p className="mt-1 text-lg font-semibold text-slate-900">{problemResult?.score || 0}%</p>
+                    <p className="text-sm text-slate-600">{problemResult?.solved ? 'Correct enough to continue.' : mission.problem?.solutionNote}</p>
                   </div>
                 ) : null}
               </MissionShellCard>
 
-              <MissionShellCard title='Solve It' accent={mission.accent} eyebrow='Your Answer'>
-                <p className='text-sm leading-6 text-slate-600'>Edit the starter code below and submit your answer.</p>
-                <textarea
-                  value={problemDraft}
-                  onChange={(event) => setProblemDraft(event.target.value)}
-                  className='mt-5 min-h-[280px] w-full rounded-[1rem] border border-slate-200 bg-slate-950 px-4 py-4 font-mono text-sm text-slate-100 outline-none transition focus:border-slate-400'
-                  spellCheck='false'
-                />
-                <div className='mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[1.2rem] border border-slate-200 bg-white px-4 py-4 shadow-sm'>
-                  <p className='text-sm text-slate-600'>{problemSubmitted ? 'Submission received.' : 'Complete the problem before continuing.'}</p>
-                  <div className='flex gap-2'>
-                    <button
-                      type='button'
-                      onClick={submitProblem}
-                      className='rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:brightness-105'
-                      style={{ backgroundColor: mission.accent }}
-                    >
-                      Check solution
-                    </button>
-                    <button
-                      type='button'
-                      onClick={continueToPostTest}
-                      disabled={!problemSubmitted || !problemResult?.solved}
-                      className='rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50'
-                    >
-                      Continue to Post-test
-                    </button>
+              <div className="flex flex-col gap-3">
+                <MissionShellCard title="Visualization" accent={mission.accent} eyebrow="How it works">
+                  <p className="text-sm leading-6 text-slate-600">Keep tracing recursion while solving the problem.</p>
+                  {isRecursionMission && recursionSteps.length > 0 ? (
+                    <div className="mt-4 space-y-4">
+                      <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+                        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Tower Of Hanoi State</p>
+                        <p className="mt-1 text-xs text-slate-600">
+                          Step {recursionStepIndex + 1} of {recursionSteps.length}: {recursionSteps[recursionStepIndex]?.caption}
+                        </p>
+                        {recursionSteps[recursionStepIndex]?.pegs ? (
+                          <div className="mt-4 grid grid-cols-3 gap-3">
+                            {TOWER_LABELS.map((tower) => {
+                              const disks = recursionSteps[recursionStepIndex]?.pegs?.[tower] || [];
+                              return (
+                                <div key={tower} className="rounded-xl border border-slate-200 bg-slate-50 px-3 pb-3 pt-2">
+                                  <p className="text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Tower {tower}</p>
+                                  <div className="mt-2 flex h-28 flex-col-reverse items-center gap-1 rounded-lg border border-dashed border-slate-200 bg-white p-2">
+                                    <div className="h-[3px] w-12 rounded-full bg-slate-400" />
+                                    {disks.map((disk) => (
+                                      <div
+                                        key={`${tower}-disk-${disk}`}
+                                        className="h-3 rounded-full"
+                                        style={{
+                                          width: `${18 + disk * 12}px`,
+                                          backgroundColor: disk === 3 ? '#1d4ed8' : disk === 2 ? '#60a5fa' : '#93c5fd',
+                                        }}
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm">
+                      Topic visualization will appear here.
+                    </div>
+                  )}
+                </MissionShellCard>
+
+                <MissionShellCard title="Solve It" accent={mission.accent} eyebrow="Your Answer">
+                  <p className="text-sm leading-6 text-slate-600">Edit the starter code below and submit your answer.</p>
+                  <textarea
+                    value={problemDraft}
+                    onChange={(event) => setProblemDraft(event.target.value)}
+                    className="mt-5 min-h-[280px] w-full rounded-[1rem] border border-slate-200 bg-slate-950 px-4 py-4 font-mono text-sm text-slate-100 outline-none transition focus:border-slate-400"
+                    spellCheck="false"
+                  />
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[1.2rem] border border-slate-200 bg-white px-4 py-4 shadow-sm">
+                    <p className="text-sm text-slate-600">{problemSubmitted ? 'Submission received.' : 'Complete the problem before continuing.'}</p>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={submitProblem}
+                        className="rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:brightness-105"
+                        style={{ backgroundColor: mission.accent }}
+                      >
+                        Check solution
+                      </button>
+                      <button
+                        type="button"
+                        onClick={continueToPostTest}
+                        disabled={!problemSubmitted || !problemResult?.solved}
+                        className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Continue to Post-test
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </MissionShellCard>
+                </MissionShellCard>
+              </div>
             </div>
           ) : null}
 

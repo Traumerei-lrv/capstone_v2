@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage/LoginPage';
 import LandingPage from './pages/LandingPage/LandingPage';
 import Test from './pages/test';
 import StudentDashboard from './pages/StudentDashboard/StudentDashboard';
+import StudentClassPage from './pages/StudentDashboard/StudentClassPage';
 import PlayerShipDashboard from './pages/PlayerShipDashboard';
 import NodeMapOverlay from './pages/NodeMapOverlay';
 import RecursionPage from './pages/StudentDashboard/missions/Recursion/RecursionPage';
@@ -108,6 +109,7 @@ export default function App() {
 
         <Route element={<ProtectedRoute currentUser={currentUser} currentRole={currentRole} isCheckingAuth={isCheckingAuth} allowedRoles={['student']} />}>
           <Route path="/playershipdashboard" element={<StudentDashboard />} />
+          <Route path="/playershipdashboard/class/:courseId" element={<StudentClassPage />} />
           <Route path="/playership" element={<PlayerShipDashboard />} />
           <Route path="/nodemapoverlay" element={<NodeMapOverlay />} />
         </Route>
@@ -115,6 +117,7 @@ export default function App() {
           <Route path="/instructor" element={<InstructorLayout />}>
             <Route index element={<InstructorDashboard />} />
             <Route path="class-management" element={<ClassManagement />} />
+            <Route path="class-management/:classId" element={<ClassManagement />} />
             <Route path="profile" element={<InstructorProfile />} />
           </Route>
         </Route>

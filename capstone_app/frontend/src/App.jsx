@@ -4,9 +4,10 @@ import LoginPage from './pages/LoginPage/LoginPage';
 import LandingPage from './pages/LandingPage/LandingPage';
 import Test from './pages/test';
 import StudentDashboard from './pages/StudentDashboard/StudentDashboard';
+import StudentClassPage from './pages/StudentDashboard/StudentClassPage';
 import PlayerShipDashboard from './pages/PlayerShipDashboard';
-import NodeMapOverlay from './pages/NodeMapOverlay';
 import TreeDeliveryDrone from './pages/TreeDeliveryDrone';
+import NodeMapOverlay from './pages/NodeMapOverlay';
 import RecursionPage from './pages/StudentDashboard/missions/Recursion/RecursionPage';
 import IterationPage from './pages/StudentDashboard/missions/Iteration/IterationPage';
 import LinkedListPage from './pages/StudentDashboard/missions/LinkedList/LinkedListPage';
@@ -108,16 +109,18 @@ export default function App() {
         <Route path="/playershipdashboard/linked-list" element={<LinkedListPage />} />
 
         <Route element={<ProtectedRoute currentUser={currentUser} currentRole={currentRole} isCheckingAuth={isCheckingAuth} allowedRoles={['student']} />}>
-          <Route path="/playershipdashboard" element={<PlayerShipDashboard />} />
-          <Route path="/tree-delivery-drone" element={<TreeDeliveryDrone />} />
           <Route path="/studentdashboard" element={<StudentDashboard />} />
+          <Route path="/playershipdashboard" element={<StudentDashboard />} />
+          <Route path="/playershipdashboard/class/:courseId" element={<StudentClassPage />} />
           <Route path="/playership" element={<PlayerShipDashboard />} />
+          <Route path="/tree-delivery-drone" element={<TreeDeliveryDrone />} />
           <Route path="/nodemapoverlay" element={<NodeMapOverlay />} />
         </Route>
         <Route element={<ProtectedRoute currentUser={currentUser} currentRole={currentRole} isCheckingAuth={isCheckingAuth} allowedRoles={['instructor']} />}>
           <Route path="/instructor" element={<InstructorLayout />}>
             <Route index element={<InstructorDashboard />} />
             <Route path="class-management" element={<ClassManagement />} />
+            <Route path="class-management/:classId" element={<ClassManagement />} />
             <Route path="profile" element={<InstructorProfile />} />
           </Route>
         </Route>

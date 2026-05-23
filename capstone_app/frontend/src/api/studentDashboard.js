@@ -420,3 +420,194 @@ export async function addUserPoints(deltaPoints) {
     throw new Error(error.message || "Failed to update points.");
   }
 }
+
+export async function fetchEnrolledClasses() {
+  const userId = await getCurrentUserId();
+
+  const { data, error } = await supabase
+    .from("course_enrollments")
+    .select(`
+      id,
+      created_at,
+      role_in_course,
+      course_id,
+      courses (
+        id,
+        code,
+        title,
+        description,
+        instructor_id,
+        created_at,
+        profiles!courses_instructor_id_fkey (
+          full_name
+        )
+      )
+    `)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message || "Failed to load enrolled classes.");
+  }
+
+  return (data || [])
+    .map((entry) => {
+      const course = entry.courses;
+      if (!course?.id) return null;
+
+      return {
+        enrollmentId: entry.id,
+        enrolledAt: entry.created_at,
+        roleInCourse: entry.role_in_course,
+        courseId: course.id,
+        code: course.code,
+        title: course.title,
+        description: course.description,
+        instructorId: course.instructor_id,
+        instructorName: course.profiles?.full_name || "Instructor",
+        createdAt: course.created_at,
+      };
+    })
+    .filter(Boolean);
+}
+
+export async function joinClassByCode(codeInput) {
+  const userId = await getCurrentUserId();
+  const code = String(codeInput || "").trim().toUpperCase();
+
+  if (!code) {
+    throw new Error("Please enter a class code.");
+  }
+
+  const { data: course, error: courseError } = await supabase
+    .from("courses")
+    .select("id, code, title")
+    .eq("code", code)
+    .maybeSingle();
+
+  if (courseError) {
+    throw new Error(courseError.message || "Failed to validate class code.");
+  }
+
+  if (!course?.id) {
+    throw new Error("Invalid class code. Please check and try again.");
+  }
+
+  const { data: existing, error: existingError } = await supabase
+    .from("course_enrollments")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("course_id", course.id)
+    .maybeSingle();
+
+  if (existingError) {
+    throw new Error(existingError.message || "Failed to check enrollment.");
+  }
+
+  if (existing?.id) {
+    return { joined: false, alreadyEnrolled: true, courseId: course.id };
+  }
+
+  const { error: insertError } = await supabase.from("course_enrollments").insert({
+    user_id: userId,
+    course_id: course.id,
+    role_in_course: "student",
+  });
+
+  if (insertError) {
+    throw new Error(insertError.message || "Failed to join class.");
+  }
+
+  return { joined: true, alreadyEnrolled: false, courseId: course.id };
+}
+
+export async function fetchClassDetailForStudent(courseId) {
+  const userId = await getCurrentUserId();
+
+  const { data: enrollment, error: enrollmentError } = await supabase
+    .from("course_enrollments")
+    .select(`
+      id,
+      created_at,
+      course_id,
+      courses (
+        id,
+        code,
+        title,
+        description,
+        instructor_id,
+        created_at,
+        profiles!courses_instructor_id_fkey (
+          full_name
+        )
+      )
+    `)
+    .eq("user_id", userId)
+    .eq("course_id", courseId)
+    .maybeSingle();
+
+  if (enrollmentError) {
+    throw new Error(enrollmentError.message || "Failed to load class enrollment.");
+  }
+
+  if (!enrollment?.courses?.id) {
+    throw new Error("You are not enrolled in this class.");
+  }
+
+  const instructorId = enrollment.courses.instructor_id;
+
+  const [{ data: classmates }, { data: announcements }, { data: materials }, { data: tasks }] = await Promise.all([
+    supabase.from("course_enrollments").select("id").eq("course_id", courseId),
+    supabase
+      .from("announcements")
+      .select("id, title, body, created_at, scope")
+      .eq("course_id", courseId)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("materials")
+      .select("id, title, type, url, created_at, created_by")
+      .eq("created_by", instructorId)
+      .order("created_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("assessments")
+      .select("id, title, type, total_points, created_at, created_by")
+      .eq("created_by", instructorId)
+      .order("created_at", { ascending: false })
+      .limit(20),
+  ]);
+
+  return {
+    course: {
+      id: enrollment.courses.id,
+      code: enrollment.courses.code,
+      title: enrollment.courses.title,
+      description: enrollment.courses.description,
+      instructorId,
+      instructorName: enrollment.courses.profiles?.full_name || "Instructor",
+      createdAt: enrollment.courses.created_at,
+      enrolledAt: enrollment.created_at,
+      memberCount: (classmates || []).length,
+    },
+    materials: (materials || []).map((item) => ({
+      ...item,
+      source: "instructor_uploads",
+    })),
+    tasks: [
+      ...(announcements || []).map((item) => ({
+        id: `ann-${item.id}`,
+        title: item.title,
+        type: "Announcement",
+        body: item.body,
+        created_at: item.created_at,
+      })),
+      ...(tasks || []).map((item) => ({
+        id: `assess-${item.id}`,
+        title: item.title,
+        type: String(item.type || "Assessment"),
+        body: `Total points: ${item.total_points || 0}`,
+        created_at: item.created_at,
+      })),
+    ].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)),
+  };
+}

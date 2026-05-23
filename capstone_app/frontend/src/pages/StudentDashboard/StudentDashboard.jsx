@@ -21,6 +21,7 @@ import AchievementsTab from './components/AchievementsTab';
 import PerformanceTab from './components/PerformanceTab';
 import ProfileTab from './components/ProfileTab';
 import { clearDemoAuthSession } from '../../demoAuth';
+import maskot from '../../assets/img/maskot.png';
 
 /**
  * BALANGKAS STUDENT DASHBOARD - REACT COMPONENT
@@ -482,17 +483,29 @@ const Dashboard = () => {
     return (
       <>
         {/* Welcome Section */}
-        <div className="mb-8 flex items-start gap-4">
-          <div className="w-12 h-12 shrink-0 bg-white border-2 border-blue-200 rounded-lg p-1 shadow-sm">
-            <div className="w-full h-full bg-blue-50 rounded flex items-center justify-center">
-              <span className="text-xl">🤖</span>
+        <div className="mb-8">
+          <div className="flex flex-col items-start gap-2 md:flex-row md:items-center">
+            <div className="relative h-20 w-20 shrink-0 md:h-24 md:w-24">
+              <img
+                src={maskot}
+                alt="Balangkas mascot"
+                className="h-full w-full object-contain drop-shadow-[0_8px_14px_rgba(17,76,147,0.35)] animate-[mascotFloat_2.6s_ease-in-out_infinite,mascotTalk_1.2s_ease-in-out_infinite]"
+              />
             </div>
-          </div>
-          <div className="bg-slate-900 text-white p-4 rounded-2xl rounded-tl-none relative shadow-xl max-w-2xl">
-            <p className="text-sm font-medium leading-relaxed">
-              "Welcome, Recruit Alpha! Ready for today's mission? The neural network awaits your command."
-            </p>
-            <div className="absolute top-0 -left-2 w-0 h-0 border-t-[0px] border-t-transparent border-r-[12px] border-r-slate-900 border-b-[12px] border-b-transparent"></div>
+
+            <div className="relative w-full max-w-5xl">
+              <div className="relative rounded-2xl border-2 border-blue-200 bg-white px-5 py-4 shadow-md">
+                <p className="mb-1 text-[10px] font-black uppercase tracking-[0.2em] text-blue-500">Mission Control</p>
+                <p className="text-sm font-semibold leading-relaxed text-blue-950">
+                  DSA mission update: you&apos;re doing great on arrays and recursion. Next target is stacks and queues to strengthen your problem-solving flow.
+                  <span className="ml-1 inline-block h-3.5 w-1.5 bg-blue-700 align-[-1px] animate-[dialogCursor_0.95s_steps(1,end)_infinite]"></span>
+                </p>
+              </div>
+              <div className="absolute -left-3 top-1/2 -translate-y-1/2">
+                <div className="h-0 w-0 border-b-[12px] border-r-[14px] border-t-[12px] border-b-transparent border-r-blue-200 border-t-transparent"></div>
+                <div className="absolute left-[3px] top-1/2 h-0 w-0 -translate-y-1/2 border-b-[9px] border-r-[11px] border-t-[9px] border-b-transparent border-r-white border-t-transparent"></div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -600,6 +613,23 @@ const Dashboard = () => {
           <a href="#" className="text-xs font-bold text-slate-400 hover:text-blue-600 transition-colors uppercase tracking-widest">Code of Conduct</a>
         </div>
       </footer>
+
+      <style>{`
+        @keyframes mascotFloat {
+          0%, 100% { transform: translateY(0px) rotate(-3deg); }
+          50% { transform: translateY(-6px) rotate(2deg); }
+        }
+
+        @keyframes mascotTalk {
+          0%, 100% { filter: brightness(1); }
+          50% { filter: brightness(1.07); }
+        }
+
+        @keyframes dialogCursor {
+          0%, 49% { opacity: 1; }
+          50%, 100% { opacity: 0; }
+        }
+      `}</style>
     </div>
   );
 };

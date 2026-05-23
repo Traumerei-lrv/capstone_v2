@@ -7,7 +7,8 @@ import btnAdventure from "../assets/img/btn_adventure-fullreso.png";
 import { clearDemoAuthSession } from "../demoAuth";
 
 const turbineFailurePage = new URL("../concept-main/assets/turbine/turbine_failure.html", import.meta.url).href;
-const overHeatPage = new URL("../concept-main/over_heat.html", import.meta.url).href;
+const rocketAvoidingPlanPage = new URL("../concept-main/assets/asteroids/index.html", import.meta.url).href;
+const cargoStackProtocolPage = new URL("../concept-main/assets/cargo/index.html", import.meta.url).href;
 const TURBINE_ALL_RUNNING_KEY = "balangkas.turbines.all_running";
 const TURBINE_STATE_STORAGE_KEY = "balangkas.turbine_failure.v2";
 
@@ -28,9 +29,17 @@ const challengeHitboxes = [
   },
   {
     id: "over-heat-hitbox",
-    href: overHeatPage,
-    title: "Reactor Overheat Challenge",
+    href: rocketAvoidingPlanPage,
+    title: "Rocket Avoiding Plan",
     left: "43.75%",
+    top: "53.15%",
+  },
+  {
+    id: "cargo-stack-protocol-hitbox",
+    href: cargoStackProtocolPage,
+    title: "Cargo Stack Protocol",
+    description: "Practice stack operations with a spaceship cargo bay simulation.",
+    left: "55.68%",
     top: "53.15%",
   },
 ];

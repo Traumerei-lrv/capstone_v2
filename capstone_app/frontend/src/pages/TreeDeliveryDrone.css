@@ -9,13 +9,13 @@
 }
 
 :root {
-  --tree-panel-bg: #c8c8c8;
-  --tree-ink: #141414;
-  --tree-danger: #ff2a2a;
-  --tree-accent: #2f8fff;
-  --tree-slot: #8c8c8c;
-  --tree-bevel-light: #f2f2f2;
-  --tree-bevel-dark: #868686;
+  --tree-panel-bg: #14183a;
+  --tree-ink: #ebeeff;
+  --tree-danger: #ff8ea2;
+  --tree-accent: #5f8dff;
+  --tree-slot: #2d355f;
+  --tree-bevel-light: #3b4b82;
+  --tree-bevel-dark: #0d1130;
 }
 
 .tree-delivery-page,
@@ -62,7 +62,7 @@
 
 .tree-delivery-screen {
   background: var(--tree-panel-bg);
-  border: 4px solid #b0b0b0;
+  border: 4px solid #303e7a;
   box-shadow: inset -3px -3px 0 var(--tree-bevel-dark), inset 3px 3px 0 var(--tree-bevel-light);
   padding: clamp(12px, 1.8vw, 18px);
   display: grid;
@@ -71,9 +71,9 @@
 }
 
 .tree-delivery-panel {
-  background: #cbcbcb;
-  border: 3px solid #a2a2a2;
-  box-shadow: inset -2px -2px 0 #8f8f8f, inset 2px 2px 0 #ececec;
+  background: #1c2551;
+  border: 3px solid #2f3d79;
+  box-shadow: inset -2px -2px 0 #151d40, inset 2px 2px 0 #394a8d;
   padding: 10px;
 }
 
@@ -98,15 +98,15 @@
 
 .tree-delivery-controls {
   margin-top: 2px;
-  border: 2px solid #969696;
-  background: #bdbdbd;
+  border: 2px solid #32427e;
+  background: #212c5a;
   padding: 10px;
   display: grid;
   gap: 8px;
 }
 
 .tree-delivery-controls label {
-  color: #1d3560;
+  color: #b8c8ff;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -115,9 +115,9 @@
 .tree-delivery-controls input {
   width: 100%;
   min-height: 38px;
-  border: 3px solid #989898;
-  background: #bcbcbc;
-  color: #202020;
+  border: 3px solid #304079;
+  background: #11173a;
+  color: #e8ecff;
   padding: 8px 10px;
   font-family: "Inter", "Segoe UI", Arial, sans-serif;
   font-size: 14px;
@@ -125,7 +125,7 @@
 }
 
 .tree-delivery-controls input:focus {
-  border-color: #6f6f6f;
+  border-color: #799eff;
 }
 
 .tree-delivery-btn-row {
@@ -160,15 +160,15 @@
   font-size: 14px;
   min-height: 220px;
   padding: 8px;
-  border: 2px solid #969696;
-  background: #b8b8b8;
-  color: #202020;
+  border: 2px solid #304179;
+  background: #1a2350;
+  color: #eaf0ff;
   white-space: pre-line;
 }
 
 .tree-delivery-brief h2 {
   margin: 0 0 8px;
-  color: #174fa8;
+  color: #a8c5ff;
   font-family: "Pixellari", monospace;
   font-size: 18px;
   letter-spacing: 0.02em;
@@ -188,11 +188,11 @@
 }
 
 .tree-game-frame {
-  background: #bdbdbd;
+  background: #1d2555;
   min-height: 210px;
   display: grid;
   place-items: center;
-  border: 2px solid #9e9e9e;
+  border: 2px solid #2f3e79;
   padding: 8px;
 }
 
@@ -202,8 +202,8 @@
 }
 
 .tree-game-canvas canvas {
-  border: 3px solid #989898;
-  box-shadow: inset -2px -2px 0 #737373, inset 2px 2px 0 #bdbdbd;
+  border: 3px solid #2c3a76;
+  box-shadow: inset -2px -2px 0 #131b43, inset 2px 2px 0 #36498d;
 }
 
 @media (max-width: 1180px) {

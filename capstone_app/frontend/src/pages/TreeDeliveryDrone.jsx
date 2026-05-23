@@ -2,6 +2,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Phaser from "phaser";
 import "./TreeDeliveryDrone.css";
+import galaxy1 from "../concept-main/assets/galaxies/galaxy_circles/galaxy1.png";
+import galaxy2 from "../concept-main/assets/galaxies/galaxy_circles/galaxy2.png";
+import galaxy3 from "../concept-main/assets/galaxies/galaxy_circles/galaxy3.png";
+import galaxy4 from "../concept-main/assets/galaxies/galaxy_circles/galaxy4.png";
+import galaxy5 from "../concept-main/assets/galaxies/galaxy_circles/galaxy5.png";
 
 class TreeNode {
   constructor(value) {
@@ -86,6 +91,7 @@ const TRAVERSAL_LABELS = {
 const DEFAULT_VALUES = ["1", "2", "3", "4", "5"];
 const XP_STORAGE_KEY = "balangkas.student.bonus_xp";
 const TREE_GAME_XP_REWARD = 120;
+const GALAXY_TEXTURES = [galaxy1, galaxy2, galaxy3, galaxy4, galaxy5];
 
 export default function TreeDeliveryDrone({ onBack }) {
   const navigate = useNavigate();
@@ -152,12 +158,18 @@ export default function TreeDeliveryDrone({ onBack }) {
         this.nodeObjects = new Map();
       }
 
+      preload() {
+        GALAXY_TEXTURES.forEach((texturePath, index) => {
+          this.load.image(`galaxy-${index + 1}`, texturePath);
+        });
+      }
+
       create() {
         this.cameras.main.setBackgroundColor("#060912");
         this.edgeGraphics = this.add.graphics();
         this.nodeGraphics = this.add.graphics();
         this.glowGraphics = this.add.graphics();
-        this.drone = this.add.triangle(450, 88, 0, 20, 28, 10, 0, 0, 0x49e3ff)
+        this.drone = this.add.triangle(450, 88, 0, 20, 28, 10, 0, 0, 0xffdb7a)
           .setStrokeStyle(2, 0xc5fbff, 1);
         this.drone.setDepth(4);
 
@@ -239,28 +251,31 @@ export default function TreeDeliveryDrone({ onBack }) {
 
         const isRoot = node === this.root;
         const isLeaf = !node.left && !node.right;
-        const fillColor = isRoot ? 0x29b3ff : 0x12325f;
-        const strokeColor = isRoot ? 0xd5f2ff : 0x73b5ff;
-        const radius = isRoot ? 30 : 27;
+        const radius = isRoot ? 34 : 30;
+        const textureIndex = (Number.parseInt(String(node.value), 10) || 0) % GALAXY_TEXTURES.length;
 
-        const circle = this.add.circle(node.x, node.y, radius, fillColor, 1);
-        circle.setStrokeStyle(3, strokeColor, 1);
+        const circle = this.add.image(node.x, node.y, `galaxy-${textureIndex + 1}`);
+        circle.setDisplaySize(radius * 2, radius * 2);
+        const baseScaleX = circle.scaleX;
+        const baseScaleY = circle.scaleY;
         circle.setDepth(2);
         circle.setInteractive({ useHandCursor: true });
         circle.on("pointerover", () => {
-          circle.setScale(1.07);
+          circle.setScale(baseScaleX * 1.02, baseScaleY * 1.02);
         });
         circle.on("pointerout", () => {
-          circle.setScale(1);
+          circle.setScale(baseScaleX, baseScaleY);
         });
         circle.on("pointerdown", () => {
           this.handleNodeClick(node);
         });
 
         const label = this.add.text(node.x, node.y, String(node.value), {
-          fontFamily: "monospace",
+          fontFamily: "Pixellari, monospace",
           fontSize: isRoot ? "22px" : "20px",
-          color: "#f0fbff",
+          color: "#f9f4dd",
+          stroke: "#161833",
+          strokeThickness: 4,
         }).setOrigin(0.5);
         label.setDepth(3);
         label.setInteractive({ useHandCursor: true });
@@ -270,8 +285,8 @@ export default function TreeDeliveryDrone({ onBack }) {
 
         let leafGlow = null;
         if (isLeaf) {
-          leafGlow = this.add.circle(node.x, node.y, radius + 8, 0x85d9ff, 0.12);
-          leafGlow.setStrokeStyle(2, 0x85d9ff, 0.6);
+          leafGlow = this.add.circle(node.x, node.y, radius + 8, 0xb091ff, 0.1);
+          leafGlow.setStrokeStyle(2, 0xb091ff, 0.5);
           leafGlow.setDepth(1);
         }
 
@@ -324,10 +339,8 @@ export default function TreeDeliveryDrone({ onBack }) {
 
       resetNodeColors() {
         this.nodeObjects.forEach((entry) => {
-          const fillColor = entry.isRoot ? 0x29b3ff : 0x12325f;
-          const strokeColor = entry.isRoot ? 0xd5f2ff : 0x73b5ff;
-          entry.circle.setFillStyle(fillColor, 1);
-          entry.circle.setStrokeStyle(3, strokeColor, 1);
+          entry.circle.setTint(0xffffff);
+          entry.circle.setAlpha(1);
         });
       }
 
@@ -349,8 +362,7 @@ export default function TreeDeliveryDrone({ onBack }) {
       handleCorrectNode(node) {
         const visuals = this.nodeObjects.get(node);
         if (visuals) {
-          visuals.circle.setFillStyle(0x24c978, 1);
-          visuals.circle.setStrokeStyle(3, 0xbfffe4, 1);
+          visuals.circle.setTint(0xa2ffd2);
         }
 
         this.moveDroneTo(node, 350);
@@ -379,12 +391,9 @@ export default function TreeDeliveryDrone({ onBack }) {
       handleWrongNode(node) {
         const visuals = this.nodeObjects.get(node);
         if (visuals) {
-          visuals.circle.setFillStyle(0xd93b4f, 1);
+          visuals.circle.setTint(0xff8ca0);
           this.time.delayedCall(180, () => {
-            const fillColor = visuals.isRoot ? 0x29b3ff : 0x12325f;
-            const strokeColor = visuals.isRoot ? 0xd5f2ff : 0x73b5ff;
-            visuals.circle.setFillStyle(fillColor, 1);
-            visuals.circle.setStrokeStyle(3, strokeColor, 1);
+            visuals.circle.setTint(0xffffff);
           });
         }
 
@@ -503,9 +512,9 @@ export default function TreeDeliveryDrone({ onBack }) {
         <main className="tree-delivery-screen">
           <section className="tree-delivery-panel tree-delivery-panel-left">
             <div className="tree-delivery-alert">
-              ERROR! Drone traversal route mismatch.
+              ALERT! Ship traversal route mismatch.
               <br />
-              Build and verify tree node order.
+              Plot and verify galaxy hop order.
             </div>
 
             <div className="tree-delivery-controls">
@@ -532,11 +541,11 @@ export default function TreeDeliveryDrone({ onBack }) {
             </div>
 
             <div className="tree-delivery-brief">
-              <h2>Traversal Briefing</h2>
+              <h2>Galaxy Travel Briefing</h2>
               <p><strong>Traversal Type:</strong> {gameInfo.traversalType}</p>
               <p><strong>Rule:</strong> {gameInfo.traversalRule}</p>
-              <p><strong>Target Order:</strong> {gameInfo.targetOrder.length ? gameInfo.targetOrder.join(" -> ") : "-"}</p>
-              <p><strong>Current Expected Node:</strong> {gameInfo.currentExpected}</p>
+              <p><strong>Galaxy Hop Plan:</strong> {gameInfo.targetOrder.length ? gameInfo.targetOrder.join(" -> ") : "-"}</p>
+              <p><strong>Current Target Galaxy:</strong> {gameInfo.currentExpected}</p>
               <p><strong>Score:</strong> {gameInfo.score}</p>
               <p><strong>Mistakes:</strong> {gameInfo.mistakes}</p>
               <p className={gameInfo.complete ? "status-complete" : "status-message"}>{gameInfo.message}</p>

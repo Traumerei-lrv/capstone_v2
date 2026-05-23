@@ -8,6 +8,8 @@ import { clearDemoAuthSession } from "../demoAuth";
 
 const turbineFailurePage = new URL("../concept-main/assets/turbine/turbine_failure.html", import.meta.url).href;
 const overHeatPage = new URL("../concept-main/over_heat.html", import.meta.url).href;
+const TURBINE_ALL_RUNNING_KEY = "balangkas.turbines.all_running";
+const TURBINE_STATE_STORAGE_KEY = "balangkas.turbine_failure.v2";
 
 const challengeHitboxes = [
   {
@@ -41,6 +43,48 @@ export default function PlayerShipDashboard() {
   const [progressComplete, setProgressComplete] = useState(false);
   const [isNodeMapLoading, setIsNodeMapLoading] = useState(false);
   const [hoveredHitbox, setHoveredHitbox] = useState(null);
+  const [allTurbinesRunning, setAllTurbinesRunning] = useState(false);
+
+  useEffect(() => {
+    const isAllSolvedFromState = () => {
+      try {
+        const raw = window.localStorage.getItem(TURBINE_STATE_STORAGE_KEY);
+        if (!raw) return false;
+
+        const parsed = JSON.parse(raw);
+        const turbines = parsed?.turbines;
+
+        if (!turbines) return false;
+
+        const t1 = Boolean(turbines["turbine-1"]?.success);
+        const t2 = Boolean(turbines["turbine-2"]?.success);
+        const t3 = Boolean(turbines["turbine-3"]?.success);
+
+        return t1 && t2 && t3;
+      } catch {
+        return false;
+      }
+    };
+
+    const syncTurbineBoost = () => {
+      try {
+        const fromState = isAllSolvedFromState();
+        const fromFlag = window.localStorage.getItem(TURBINE_ALL_RUNNING_KEY) === "true";
+        setAllTurbinesRunning(fromState && fromFlag);
+      } catch {
+        setAllTurbinesRunning(false);
+      }
+    };
+
+    syncTurbineBoost();
+    window.addEventListener("storage", syncTurbineBoost);
+    window.addEventListener("balangkas:turbines-updated", syncTurbineBoost);
+
+    return () => {
+      window.removeEventListener("storage", syncTurbineBoost);
+      window.removeEventListener("balangkas:turbines-updated", syncTurbineBoost);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -106,7 +150,13 @@ export default function PlayerShipDashboard() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black text-white">
-      <HyperspaceBackground />
+      <HyperspaceBackground boosted={allTurbinesRunning} />
+
+      {allTurbinesRunning ? (
+        <div className="absolute left-1/2 top-4 z-50 -translate-x-1/2 rounded-full border border-emerald-200/70 bg-emerald-900/45 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.26em] text-emerald-100">
+          All Turbines Running
+        </div>
+      ) : null}
 
       <button
         type="button"

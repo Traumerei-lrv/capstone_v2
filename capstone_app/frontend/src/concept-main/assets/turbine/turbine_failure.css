@@ -87,6 +87,68 @@ body {
   margin-bottom: 0;
 }
 
+.turbine-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.turbine-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 1;
+}
+
+.turbine-tab {
+  border: 2px solid #7a7a7a;
+  background: #a7a7a7;
+  color: #121212;
+  font-family: "Pixellari", monospace;
+  padding: 6px 8px;
+  min-width: 148px;
+  cursor: pointer;
+  display: grid;
+  gap: 4px;
+  text-align: left;
+}
+
+.turbine-tab.active {
+  border-color: #2c61b0;
+  box-shadow: inset 0 0 0 1px #9ec8ff;
+}
+
+.turbine-tab.solved {
+  border-color: #287028;
+  background: #b9d9b9;
+}
+
+.tab-title {
+  font-family: "VCR", monospace;
+  font-size: 12px;
+}
+
+.tab-status {
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #cc2828;
+  box-shadow: 0 0 0 1px #6d0f0f inset;
+}
+
+.status-dot.solved {
+  background: #3eb63e;
+  box-shadow: 0 0 0 1px #196019 inset;
+}
+
 .turbine-wrap {
   background: #bdbdbd;
   min-height: 210px;
@@ -264,19 +326,27 @@ body {
   flex-wrap: wrap;
 }
 
-button.ctrl {
+.ctrl {
   border: 2px solid #2c61b0;
   background: #2f8fff;
   color: white;
   font-family: "Pixellari", monospace;
   padding: 8px 12px;
   cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-button.ctrl.alt {
+.ctrl.alt {
   border-color: #7a7a7a;
   background: #9d9d9d;
   color: #111;
+}
+
+.nav-home {
+  min-width: 180px;
 }
 
 .queue {

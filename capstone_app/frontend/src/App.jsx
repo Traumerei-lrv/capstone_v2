@@ -110,6 +110,7 @@ export default function App() {
         <Route element={<ProtectedRoute currentUser={currentUser} currentRole={currentRole} isCheckingAuth={isCheckingAuth} allowedRoles={['student']} />}>
           <Route path="/playershipdashboard" element={<StudentDashboard />} />
           <Route path="/playershipdashboard/class/:courseId" element={<StudentClassPage />} />
+          <Route path="/studentdashboard" element={<StudentDashboard />} />
           <Route path="/playership" element={<PlayerShipDashboard />} />
           <Route path="/nodemapoverlay" element={<NodeMapOverlay />} />
         </Route>

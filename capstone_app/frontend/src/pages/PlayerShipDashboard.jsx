@@ -40,6 +40,7 @@ export default function PlayerShipDashboard() {
   const [assetsReady, setAssetsReady] = useState(false);
   const [progressComplete, setProgressComplete] = useState(false);
   const [isNodeMapLoading, setIsNodeMapLoading] = useState(false);
+  const [hoveredHitbox, setHoveredHitbox] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -131,28 +132,55 @@ export default function PlayerShipDashboard() {
       />
 
       <div className={`relative z-10 transition-opacity duration-700 ${showLoading || isNodeMapLoading ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
-        {challengeHitboxes.map((hitbox) => (
-          hitbox.route ? (
-            <button
-              key={hitbox.id}
-              type="button"
-              title={hitbox.title}
-              onClick={() => navigate(hitbox.route)}
-              className="absolute z-20 block h-[clamp(52px,5.4vw,88px)] w-[clamp(52px,5.4vw,88px)] -translate-x-1/2 -translate-y-1/2 rounded-full transition hover:bg-cyan-300/25"
-              style={{ left: hitbox.left, top: hitbox.top }}
-              aria-label={hitbox.title}
-            />
-          ) : (
-            <a
-              key={hitbox.id}
-              href={hitbox.href}
-              title={hitbox.title}
-              className="absolute z-20 block h-[clamp(52px,5.4vw,88px)] w-[clamp(52px,5.4vw,88px)] -translate-x-1/2 -translate-y-1/2 rounded-full transition hover:bg-cyan-300/25"
-              style={{ left: hitbox.left, top: hitbox.top }}
-              aria-label={hitbox.title}
-            />
-          )
-        ))}
+        {hoveredHitbox ? (
+          <aside className="pointer-events-none absolute left-1/2 top-[30%] z-30 w-[360px] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-cyan-300/60 bg-slate-950/75 p-4 text-center shadow-[0_0_24px_rgba(34,211,238,0.3)] backdrop-blur-sm">
+            <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-cyan-200">
+              {hoveredHitbox.title}
+            </h3>
+            <p className="mt-2 text-xs leading-relaxed text-cyan-50/90">
+              {hoveredHitbox.description}
+            </p>
+          </aside>
+        ) : null}
+
+        <div className="absolute left-1/2 top-[60%] z-20 flex w-[min(92vw,980px)] -translate-x-1/2 -translate-y-1/2 flex-wrap items-center justify-center gap-4">
+          {challengeHitboxes.map((hitbox) => (
+            hitbox.route ? (
+              <button
+                key={hitbox.id}
+                type="button"
+                title={hitbox.title}
+                onClick={() => navigate(hitbox.route)}
+                onMouseEnter={() => setHoveredHitbox({
+                  id: hitbox.id,
+                  title: hitbox.title,
+                  description: hitbox.description ?? "Description placeholder. Edit this text for your mission details.",
+                })}
+                onMouseLeave={() => setHoveredHitbox((current) => (current?.id === hitbox.id ? null : current))}
+                className="min-h-[56px] min-w-[220px] rounded-md border border-cyan-200/70 bg-slate-900/25 px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.12em] text-cyan-100 shadow-[0_0_0_rgba(34,211,238,0)] backdrop-blur-[1px] transition hover:bg-slate-900/45 hover:shadow-[0_0_18px_rgba(34,211,238,0.55)]"
+                aria-label={hitbox.title}
+              >
+                {hitbox.title}
+              </button>
+            ) : (
+              <a
+                key={hitbox.id}
+                href={hitbox.href}
+                title={hitbox.title}
+                onMouseEnter={() => setHoveredHitbox({
+                  id: hitbox.id,
+                  title: hitbox.title,
+                  description: hitbox.description ?? "Description placeholder. Edit this text for your mission details.",
+                })}
+                onMouseLeave={() => setHoveredHitbox((current) => (current?.id === hitbox.id ? null : current))}
+                className="inline-flex min-h-[56px] min-w-[220px] items-center justify-center rounded-md border border-cyan-200/70 bg-slate-900/25 px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.12em] text-cyan-100 shadow-[0_0_0_rgba(34,211,238,0)] backdrop-blur-[1px] transition hover:bg-slate-900/45 hover:shadow-[0_0_18px_rgba(34,211,238,0.55)]"
+                aria-label={hitbox.title}
+              >
+                {hitbox.title}
+              </a>
+            )
+          ))}
+        </div>
 
         <div className="relative mx-auto flex min-h-screen w-full max-w-[1440px] flex-col justify-between px-5 py-6 sm:px-8 lg:px-12">
           <main className="relative flex flex-1 items-center justify-center py-8">
@@ -169,7 +197,7 @@ export default function PlayerShipDashboard() {
                 }}
                 aria-label="Open lesson node map"
               >
-                <img src={btnAdventure} alt="Adventure" className="adventure-btn cursor-pointer" />
+                {/* <img src={btnAdventure} alt="Adventure" className="adventure-btn cursor-pointer" /> */}
               </button>
             </div>
           </main>

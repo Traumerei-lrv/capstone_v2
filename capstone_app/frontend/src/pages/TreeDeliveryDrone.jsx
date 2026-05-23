@@ -84,6 +84,8 @@ const TRAVERSAL_LABELS = {
 };
 
 const DEFAULT_VALUES = ["1", "2", "3", "4", "5"];
+const XP_STORAGE_KEY = "balangkas.student.bonus_xp";
+const TREE_GAME_XP_REWARD = 120;
 
 export default function TreeDeliveryDrone({ onBack }) {
   const navigate = useNavigate();
@@ -92,8 +94,11 @@ export default function TreeDeliveryDrone({ onBack }) {
   const sceneBridgeRef = useRef(null);
   const latestRootRef = useRef(null);
   const uiCallbackRef = useRef(null);
+  const rewardIssuedRef = useRef(false);
+  const popupTimerRef = useRef(null);
 
   const [nodeInput, setNodeInput] = useState("");
+  const [xpPopup, setXpPopup] = useState(null);
   const [nodeValues, setNodeValues] = useState(DEFAULT_VALUES);
   const [gameInfo, setGameInfo] = useState({
     traversalType: "None",
@@ -111,6 +116,25 @@ export default function TreeDeliveryDrone({ onBack }) {
 
   uiCallbackRef.current = (nextState) => {
     setGameInfo((previous) => ({ ...previous, ...nextState }));
+  };
+
+  const awardXp = (amount) => {
+    if (typeof window === "undefined") return;
+    const raw = window.localStorage.getItem(XP_STORAGE_KEY);
+    const current = Number.parseInt(raw || "0", 10);
+    const next = (Number.isFinite(current) ? current : 0) + amount;
+    window.localStorage.setItem(XP_STORAGE_KEY, String(next));
+    window.dispatchEvent(new Event("balangkas:xp-updated"));
+  };
+
+  const showXpPopup = (amount) => {
+    setXpPopup(`Traversal Complete! +${amount} XP awarded.`);
+    if (popupTimerRef.current) {
+      clearTimeout(popupTimerRef.current);
+    }
+    popupTimerRef.current = setTimeout(() => {
+      setXpPopup(null);
+    }, 2200);
   };
 
   useEffect(() => {
@@ -279,6 +303,7 @@ export default function TreeDeliveryDrone({ onBack }) {
 
       startTraversal(type) {
         if (!this.root) return;
+        rewardIssuedRef.current = false;
         this.traversalNodes = this.traversalFor(type);
         this.currentTraversal = type;
         this.currentIndex = 0;
@@ -335,6 +360,11 @@ export default function TreeDeliveryDrone({ onBack }) {
         const complete = this.currentIndex >= this.traversalNodes.length;
         const nextExpected = complete ? "-" : String(this.traversalNodes[this.currentIndex].value);
         const message = complete ? "Traversal Complete!" : "Correct node!";
+        if (complete && !rewardIssuedRef.current) {
+          rewardIssuedRef.current = true;
+          awardXp(TREE_GAME_XP_REWARD);
+          showXpPopup(TREE_GAME_XP_REWARD);
+        }
 
         this.emitUiState(
           TRAVERSAL_LABELS[this.currentTraversal],
@@ -418,6 +448,9 @@ export default function TreeDeliveryDrone({ onBack }) {
     gameRef.current = new Phaser.Game(config);
 
     return () => {
+      if (popupTimerRef.current) {
+        clearTimeout(popupTimerRef.current);
+      }
       sceneBridgeRef.current = null;
       if (gameRef.current) {
         gameRef.current.destroy(true);
@@ -451,6 +484,7 @@ export default function TreeDeliveryDrone({ onBack }) {
   const handleResetTree = () => {
     setNodeValues(DEFAULT_VALUES);
     setNodeInput("");
+    rewardIssuedRef.current = false;
   };
 
   const handleBack = () => {
@@ -460,48 +494,62 @@ export default function TreeDeliveryDrone({ onBack }) {
 
   return (
     <section className="tree-delivery-page">
-      <div className="tree-delivery-shell">
-        <header className="tree-delivery-header">
-          <h1>Tree Delivery Drone</h1>
-          <p>Build a binary tree by level-order insert, then click nodes in the correct traversal path.</p>
-        </header>
-
-        <div className="tree-delivery-controls">
-          <label htmlFor="tree-node-input">Node Value</label>
-          <input
-            id="tree-node-input"
-            type="text"
-            value={nodeInput}
-            maxLength={8}
-            onChange={(event) => setNodeInput(event.target.value)}
-            placeholder="Type node value"
-          />
-          <button type="button" onClick={handleInsert}>Insert Node</button>
-          <button type="button" onClick={() => startTraversal("levelOrder")}>Start Level Order</button>
-          <button type="button" onClick={() => startTraversal("preorder")}>Start Preorder</button>
-          <button type="button" onClick={() => startTraversal("inorder")}>Start Inorder</button>
-          <button type="button" onClick={() => startTraversal("postorder")}>Start Postorder</button>
-          <button type="button" onClick={handleResetTree}>Reset Tree</button>
-          <button type="button" className="tree-delivery-back-btn" onClick={handleBack}>Back</button>
-        </div>
-
-        <div className="tree-delivery-layout">
-          <div className="tree-delivery-panel">
-            <h2>Traversal Briefing</h2>
-            <p><strong>Traversal Type:</strong> {gameInfo.traversalType}</p>
-            <p><strong>Rule:</strong> {gameInfo.traversalRule}</p>
-            <p><strong>Target Order:</strong> {gameInfo.targetOrder.length ? gameInfo.targetOrder.join(" -> ") : "-"}</p>
-            <p><strong>Current Expected Node:</strong> {gameInfo.currentExpected}</p>
-            <p><strong>Score:</strong> {gameInfo.score}</p>
-            <p><strong>Mistakes:</strong> {gameInfo.mistakes}</p>
-            <p className={gameInfo.complete ? "status-complete" : "status-message"}>{gameInfo.message}</p>
-            <p><strong>Current Tree Input:</strong> {nodeValues.join(", ")}</p>
+      <div className="tree-delivery-frame">
+        {xpPopup ? (
+          <div className="tree-xp-popup" role="status" aria-live="polite">
+            {xpPopup}
           </div>
+        ) : null}
+        <main className="tree-delivery-screen">
+          <section className="tree-delivery-panel tree-delivery-panel-left">
+            <div className="tree-delivery-alert">
+              ERROR! Drone traversal route mismatch.
+              <br />
+              Build and verify tree node order.
+            </div>
 
-          <div className="tree-game-frame">
-            <div ref={gameContainerRef} className="tree-game-canvas" />
-          </div>
-        </div>
+            <div className="tree-delivery-controls">
+              <label htmlFor="tree-node-input">Node Value</label>
+              <input
+                id="tree-node-input"
+                type="text"
+                value={nodeInput}
+                maxLength={8}
+                onChange={(event) => setNodeInput(event.target.value)}
+                placeholder="Type node value"
+              />
+              <div className="tree-delivery-btn-row">
+                <button type="button" className="tree-ctrl" onClick={handleInsert}>Insert Node</button>
+                <button type="button" className="tree-ctrl" onClick={() => startTraversal("levelOrder")}>Start Level Order</button>
+                <button type="button" className="tree-ctrl" onClick={() => startTraversal("preorder")}>Start Preorder</button>
+                <button type="button" className="tree-ctrl" onClick={() => startTraversal("inorder")}>Start Inorder</button>
+                <button type="button" className="tree-ctrl" onClick={() => startTraversal("postorder")}>Start Postorder</button>
+              </div>
+              <div className="tree-delivery-btn-row">
+                <button type="button" className="tree-ctrl tree-ctrl-alt" onClick={handleResetTree}>Reset Tree</button>
+                <button type="button" className="tree-ctrl tree-ctrl-alt" onClick={handleBack}>Back</button>
+              </div>
+            </div>
+
+            <div className="tree-delivery-brief">
+              <h2>Traversal Briefing</h2>
+              <p><strong>Traversal Type:</strong> {gameInfo.traversalType}</p>
+              <p><strong>Rule:</strong> {gameInfo.traversalRule}</p>
+              <p><strong>Target Order:</strong> {gameInfo.targetOrder.length ? gameInfo.targetOrder.join(" -> ") : "-"}</p>
+              <p><strong>Current Expected Node:</strong> {gameInfo.currentExpected}</p>
+              <p><strong>Score:</strong> {gameInfo.score}</p>
+              <p><strong>Mistakes:</strong> {gameInfo.mistakes}</p>
+              <p className={gameInfo.complete ? "status-complete" : "status-message"}>{gameInfo.message}</p>
+              <p><strong>Current Tree Input:</strong> {nodeValues.join(", ")}</p>
+            </div>
+          </section>
+
+          <section className="tree-delivery-panel tree-delivery-panel-right">
+            <div className="tree-game-frame">
+              <div ref={gameContainerRef} className="tree-game-canvas" />
+            </div>
+          </section>
+        </main>
       </div>
     </section>
   );

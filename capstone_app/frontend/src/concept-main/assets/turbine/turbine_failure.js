@@ -1,5 +1,7 @@
 const nodeBad = "./node_bad.png";
 const nodeGood = "./node_good.png";
+const XP_STORAGE_KEY = "balangkas.student.bonus_xp";
+const TURBINE_XP_REWARD = 150;
 
 const goodOrder = ["L1", "L2", "L3", "L4", "L5"];
 
@@ -24,11 +26,48 @@ const state = {
   nodes: ["L3", "L1", "L5", "L2", "L4"],
   dragging: null,
   success: false,
+  xpAwardedForCurrentRepair: false,
   activeIndex: -1,
   movingDot: null,
   readTimer: null,
   syncingFromDrag: false
 };
+
+let xpPopupTimer = null;
+
+function awardXp(amount) {
+  try {
+    const raw = window.localStorage.getItem(XP_STORAGE_KEY);
+    const current = Number.parseInt(raw || "0", 10);
+    const next = (Number.isFinite(current) ? current : 0) + amount;
+    window.localStorage.setItem(XP_STORAGE_KEY, String(next));
+    window.dispatchEvent(new Event("balangkas:xp-updated"));
+  } catch {}
+}
+
+function showXpPopup(message) {
+  const existing = document.querySelector(".xp-popup");
+
+  if (existing) {
+    existing.remove();
+  }
+
+  const popup = document.createElement("div");
+  popup.className = "xp-popup";
+  popup.setAttribute("role", "status");
+  popup.setAttribute("aria-live", "polite");
+  popup.textContent = message;
+  document.body.appendChild(popup);
+
+  if (xpPopupTimer) {
+    clearTimeout(xpPopupTimer);
+  }
+
+  xpPopupTimer = setTimeout(() => {
+    popup.remove();
+    xpPopupTimer = null;
+  }, 2200);
+}
 
 const positions = [
   { x: 50, y: 10 },
@@ -192,6 +231,7 @@ function renderQueue(mode = "neutral") {
       state.nodes = updated;
       state.dragging = null;
       state.success = false;
+      state.xpAwardedForCurrentRepair = false;
       state.activeIndex = -1;
       state.movingDot = null;
 
@@ -479,6 +519,11 @@ function runDiagnostics() {
 
   if (arrangementOk && codeHeadOk && codeTailOk && codeLinksOk) {
     state.success = true;
+    if (!state.xpAwardedForCurrentRepair) {
+      state.xpAwardedForCurrentRepair = true;
+      awardXp(TURBINE_XP_REWARD);
+      showXpPopup(`Repair Complete! +${TURBINE_XP_REWARD} XP awarded.`);
+    }
 
     statusLine.className = "status-line ok";
     statusLine.textContent =
@@ -553,6 +598,7 @@ function resetAll() {
   state.nodes = ["L3", "L1", "L5", "L2", "L4"];
   state.dragging = null;
   state.success = false;
+  state.xpAwardedForCurrentRepair = false;
   state.activeIndex = -1;
   state.movingDot = null;
 
@@ -585,6 +631,7 @@ function shuffleNodes() {
 
   state.nodes = arr;
   state.success = false;
+  state.xpAwardedForCurrentRepair = false;
   state.activeIndex = -1;
   state.movingDot = null;
 

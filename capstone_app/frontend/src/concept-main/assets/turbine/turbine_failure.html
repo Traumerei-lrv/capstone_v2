@@ -9,17 +9,21 @@
 <body>
   <div class="frame">
     <main class="screen">
-      <!-- LEFT PANEL -->
       <section class="panel panel-left">
+        <div class="turbine-nav">
+          <a class="ctrl alt nav-home" href="/playership">Back to Player Ship</a>
+          <div id="turbineButtons" class="turbine-buttons"></div>
+        </div>
+
         <div class="alert">
-          ERROR! Hyperspace turbine linked list broken.<br />
+          ERROR! <span id="turbineTitle">Turbine 1</span> linked list broken.<br />
           Reconnect HEAD, nodes, and TAIL.
         </div>
 
         <div class="turbine-wrap">
           <img
             id="turbineStatus"
-            src="assets/turbine/turbine_error.png"
+            src="./turbine_error.png"
             alt="Turbine state"
           />
         </div>
@@ -27,7 +31,7 @@
         <div class="stats">
           <div>
             <strong>Required Linked List:</strong>
-            HEAD → L1 → L2 → L3 → L4 → L5 → TAIL
+            <span id="requiredLine">HEAD -> L1 -> L2 -> L3 -> L4 -> L5 -> TAIL</span>
           </div>
 
           <div class="progress">
@@ -40,9 +44,7 @@
           </div>
         </div>
 
-        <!-- MOVED CONSOLE HERE -->
         <div class="console">
-
           <div class="btn-row">
             <button id="shuffleBtn" class="ctrl alt" type="button">
               Scramble Nodes
@@ -59,20 +61,19 @@
         </div>
       </section>
 
-      <!-- RIGHT PANEL -->
       <section class="panel panel-right">
         <div class="loop-viz">
           <div class="ring-canvas" id="ring"></div>
         </div>
-          <div><strong>Linked List Nodes Drag to Rearrange:</strong></div>
-          <div id="queue" class="queue"></div>
-          <div class="status-line" id="statusLine">
-            System waiting for linked list diagnostics...
-          </div>
+        <div><strong>Linked List Nodes Drag to Rearrange:</strong></div>
+        <div id="queue" class="queue"></div>
+        <div class="status-line" id="statusLine">
+          System waiting for linked list diagnostics...
+        </div>
 
-          <div class="diagnostic-log" id="diagnosticLog">
-            Console ready.
-          </div>
+        <div class="diagnostic-log" id="diagnosticLog">
+          Console ready.
+        </div>
       </section>
     </main>
   </div>

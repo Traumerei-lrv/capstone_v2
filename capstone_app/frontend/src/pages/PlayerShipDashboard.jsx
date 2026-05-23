@@ -7,7 +7,10 @@ import btnAdventure from "../assets/img/btn_adventure-fullreso.png";
 import { clearDemoAuthSession } from "../demoAuth";
 
 const turbineFailurePage = new URL("../concept-main/assets/turbine/turbine_failure.html", import.meta.url).href;
-const overHeatPage = new URL("../concept-main/over_heat.html", import.meta.url).href;
+const rocketAvoidingPlanPage = new URL("../concept-main/assets/asteroids/index.html", import.meta.url).href;
+const cargoStackProtocolPage = new URL("../concept-main/assets/cargo/index.html", import.meta.url).href;
+const TURBINE_ALL_RUNNING_KEY = "balangkas.turbines.all_running";
+const TURBINE_STATE_STORAGE_KEY = "balangkas.turbine_failure.v2";
 
 const challengeHitboxes = [
   {
@@ -26,9 +29,17 @@ const challengeHitboxes = [
   },
   {
     id: "over-heat-hitbox",
-    href: overHeatPage,
-    title: "Reactor Overheat Challenge",
+    href: rocketAvoidingPlanPage,
+    title: "Rocket Avoiding Plan",
     left: "43.75%",
+    top: "53.15%",
+  },
+  {
+    id: "cargo-stack-protocol-hitbox",
+    href: cargoStackProtocolPage,
+    title: "Cargo Stack Protocol",
+    description: "Practice stack operations with a spaceship cargo bay simulation.",
+    left: "55.68%",
     top: "53.15%",
   },
 ];
@@ -40,6 +51,49 @@ export default function PlayerShipDashboard() {
   const [assetsReady, setAssetsReady] = useState(false);
   const [progressComplete, setProgressComplete] = useState(false);
   const [isNodeMapLoading, setIsNodeMapLoading] = useState(false);
+  const [hoveredHitbox, setHoveredHitbox] = useState(null);
+  const [allTurbinesRunning, setAllTurbinesRunning] = useState(false);
+
+  useEffect(() => {
+    const isAllSolvedFromState = () => {
+      try {
+        const raw = window.localStorage.getItem(TURBINE_STATE_STORAGE_KEY);
+        if (!raw) return false;
+
+        const parsed = JSON.parse(raw);
+        const turbines = parsed?.turbines;
+
+        if (!turbines) return false;
+
+        const t1 = Boolean(turbines["turbine-1"]?.success);
+        const t2 = Boolean(turbines["turbine-2"]?.success);
+        const t3 = Boolean(turbines["turbine-3"]?.success);
+
+        return t1 && t2 && t3;
+      } catch {
+        return false;
+      }
+    };
+
+    const syncTurbineBoost = () => {
+      try {
+        const fromState = isAllSolvedFromState();
+        const fromFlag = window.localStorage.getItem(TURBINE_ALL_RUNNING_KEY) === "true";
+        setAllTurbinesRunning(fromState && fromFlag);
+      } catch {
+        setAllTurbinesRunning(false);
+      }
+    };
+
+    syncTurbineBoost();
+    window.addEventListener("storage", syncTurbineBoost);
+    window.addEventListener("balangkas:turbines-updated", syncTurbineBoost);
+
+    return () => {
+      window.removeEventListener("storage", syncTurbineBoost);
+      window.removeEventListener("balangkas:turbines-updated", syncTurbineBoost);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -105,7 +159,13 @@ export default function PlayerShipDashboard() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black text-white">
-      <HyperspaceBackground />
+      <HyperspaceBackground boosted={allTurbinesRunning} />
+
+      {allTurbinesRunning ? (
+        <div className="absolute left-1/2 top-4 z-50 -translate-x-1/2 rounded-full border border-emerald-200/70 bg-emerald-900/45 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.26em] text-emerald-100">
+          All Turbines Running
+        </div>
+      ) : null}
 
       <button
         type="button"
@@ -131,28 +191,55 @@ export default function PlayerShipDashboard() {
       />
 
       <div className={`relative z-10 transition-opacity duration-700 ${showLoading || isNodeMapLoading ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
-        {challengeHitboxes.map((hitbox) => (
-          hitbox.route ? (
-            <button
-              key={hitbox.id}
-              type="button"
-              title={hitbox.title}
-              onClick={() => navigate(hitbox.route)}
-              className="absolute z-20 block h-[clamp(52px,5.4vw,88px)] w-[clamp(52px,5.4vw,88px)] -translate-x-1/2 -translate-y-1/2 rounded-full transition hover:bg-cyan-300/25"
-              style={{ left: hitbox.left, top: hitbox.top }}
-              aria-label={hitbox.title}
-            />
-          ) : (
-            <a
-              key={hitbox.id}
-              href={hitbox.href}
-              title={hitbox.title}
-              className="absolute z-20 block h-[clamp(52px,5.4vw,88px)] w-[clamp(52px,5.4vw,88px)] -translate-x-1/2 -translate-y-1/2 rounded-full transition hover:bg-cyan-300/25"
-              style={{ left: hitbox.left, top: hitbox.top }}
-              aria-label={hitbox.title}
-            />
-          )
-        ))}
+        {hoveredHitbox ? (
+          <aside className="pointer-events-none absolute left-1/2 top-[30%] z-30 w-[360px] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-cyan-300/60 bg-slate-950/75 p-4 text-center shadow-[0_0_24px_rgba(34,211,238,0.3)] backdrop-blur-sm">
+            <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-cyan-200">
+              {hoveredHitbox.title}
+            </h3>
+            <p className="mt-2 text-xs leading-relaxed text-cyan-50/90">
+              {hoveredHitbox.description}
+            </p>
+          </aside>
+        ) : null}
+
+        <div className="absolute left-1/2 top-[60%] z-20 flex w-[min(92vw,980px)] -translate-x-1/2 -translate-y-1/2 flex-wrap items-center justify-center gap-4">
+          {challengeHitboxes.map((hitbox) => (
+            hitbox.route ? (
+              <button
+                key={hitbox.id}
+                type="button"
+                title={hitbox.title}
+                onClick={() => navigate(hitbox.route)}
+                onMouseEnter={() => setHoveredHitbox({
+                  id: hitbox.id,
+                  title: hitbox.title,
+                  description: hitbox.description ?? "Description placeholder. Edit this text for your mission details.",
+                })}
+                onMouseLeave={() => setHoveredHitbox((current) => (current?.id === hitbox.id ? null : current))}
+                className="min-h-[56px] min-w-[220px] rounded-md border border-cyan-200/70 bg-slate-900/25 px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.12em] text-cyan-100 shadow-[0_0_0_rgba(34,211,238,0)] backdrop-blur-[1px] transition hover:bg-slate-900/45 hover:shadow-[0_0_18px_rgba(34,211,238,0.55)]"
+                aria-label={hitbox.title}
+              >
+                {hitbox.title}
+              </button>
+            ) : (
+              <a
+                key={hitbox.id}
+                href={hitbox.href}
+                title={hitbox.title}
+                onMouseEnter={() => setHoveredHitbox({
+                  id: hitbox.id,
+                  title: hitbox.title,
+                  description: hitbox.description ?? "Description placeholder. Edit this text for your mission details.",
+                })}
+                onMouseLeave={() => setHoveredHitbox((current) => (current?.id === hitbox.id ? null : current))}
+                className="inline-flex min-h-[56px] min-w-[220px] items-center justify-center rounded-md border border-cyan-200/70 bg-slate-900/25 px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.12em] text-cyan-100 shadow-[0_0_0_rgba(34,211,238,0)] backdrop-blur-[1px] transition hover:bg-slate-900/45 hover:shadow-[0_0_18px_rgba(34,211,238,0.55)]"
+                aria-label={hitbox.title}
+              >
+                {hitbox.title}
+              </a>
+            )
+          ))}
+        </div>
 
         <div className="relative mx-auto flex min-h-screen w-full max-w-[1440px] flex-col justify-between px-5 py-6 sm:px-8 lg:px-12">
           <main className="relative flex flex-1 items-center justify-center py-8">
@@ -169,7 +256,7 @@ export default function PlayerShipDashboard() {
                 }}
                 aria-label="Open lesson node map"
               >
-                <img src={btnAdventure} alt="Adventure" className="adventure-btn cursor-pointer" />
+                {/* <img src={btnAdventure} alt="Adventure" className="adventure-btn cursor-pointer" /> */}
               </button>
             </div>
           </main>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Bell, 
@@ -37,6 +37,10 @@ const Card = ({ children, className = "" }) => (
   </div>
 );
 
+const BONUS_XP_STORAGE_KEY = 'balangkas.student.bonus_xp';
+const BASE_STUDENT_XP = 1250;
+const LEVEL_TARGET_XP = 3250;
+
 const ProgressBar = ({ progress, total, label }) => {
   const percentage = (progress / total) * 100;
   return (
@@ -67,7 +71,7 @@ const StatItem = ({ icon: Icon, label, value, color }) => (
   </div>
 );
 
-const UserProfile = () => (
+const UserProfile = ({ points }) => (
   <Card className="mb-6 flex flex-col md:flex-row items-center gap-8 shadow-sm">
     <div className="flex items-center gap-6 flex-1">
       <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center border-2 border-blue-200">
@@ -87,7 +91,7 @@ const UserProfile = () => (
     </div>
 
     <div className="w-full md:w-auto md:min-w-[300px]">
-      <ProgressBar progress={1250} total={3250} label="Level 5 Progress" />
+      <ProgressBar progress={points} total={LEVEL_TARGET_XP} label="Level 5 Progress" />
     </div>
   </Card>
 );
@@ -392,6 +396,26 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState('home');
   const [materialFilter, setMaterialFilter] = useState('All');
+  const [bonusXp, setBonusXp] = useState(0);
+
+  useEffect(() => {
+    const loadBonusXp = () => {
+      const raw = window.localStorage.getItem(BONUS_XP_STORAGE_KEY);
+      const parsed = Number.parseInt(raw || '0', 10);
+      setBonusXp(Number.isFinite(parsed) ? parsed : 0);
+    };
+
+    loadBonusXp();
+    window.addEventListener('storage', loadBonusXp);
+    window.addEventListener('balangkas:xp-updated', loadBonusXp);
+    document.addEventListener('visibilitychange', loadBonusXp);
+
+    return () => {
+      window.removeEventListener('storage', loadBonusXp);
+      window.removeEventListener('balangkas:xp-updated', loadBonusXp);
+      document.removeEventListener('visibilitychange', loadBonusXp);
+    };
+  }, []);
 
   const handleLogout = async () => {
     clearDemoAuthSession();
@@ -416,8 +440,8 @@ const Dashboard = () => {
     { id: 'att-3', title: 'Iteration Challenge', source: 'Iteration', score: 91, when: '2026-05-19T09:05:00Z' },
   ];
 
-  const points = 1250;
-  const xpProgress = 48;
+  const points = BASE_STUDENT_XP + bonusXp;
+  const xpProgress = Math.min(100, Math.round((points / LEVEL_TARGET_XP) * 100));
 
   const loadDashboard = () => {
     setSelectedTab((currentTab) => currentTab);
@@ -485,7 +509,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <UserProfile />
+        <UserProfile points={points} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Column */}
@@ -522,7 +546,7 @@ const Dashboard = () => {
                 <LeaderboardItem rank={1} name="AlgoMaster" xp="8500" />
                 <LeaderboardItem rank={2} name="CodeNinja" xp="7200" />
                 <LeaderboardItem rank={3} name="DataWizard" xp="6800" />
-                <LeaderboardItem rank={4} name="You (Alpha)" xp="1250" isUser />
+                <LeaderboardItem rank={4} name="You (Alpha)" xp={String(points)} isUser />
               </div>
               <button className="w-full py-3 text-sm font-black text-blue-600 uppercase tracking-widest border-t-2 border-blue-50 hover:bg-blue-50 transition-colors rounded-b-xl">
                 View Full Rankings

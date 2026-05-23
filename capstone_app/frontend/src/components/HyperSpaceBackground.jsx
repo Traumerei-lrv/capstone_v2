@@ -1,13 +1,11 @@
 import { useEffect, useRef } from 'react';
 
-export default function HyperspaceBackground() {
+export default function HyperspaceBackground({ boosted = false }) {
   const canvasRef = useRef(null);
   const animationRef = useRef(null);
   const starsRef = useRef([]);
 
   useEffect(() => {
-    console.log('HyperspaceBackground mounted');
-
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -21,8 +19,8 @@ export default function HyperspaceBackground() {
 
     resizeCanvas();
 
-    const starCount = 2000;
-    const speed = 0.5;
+    const starCount = boosted ? 3200 : 700;
+    const speed = boosted ? 0.95 : 0.05;
 
     // Star colors
     const colors = [
@@ -130,7 +128,7 @@ export default function HyperspaceBackground() {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, []);
+  }, [boosted]);
 
   return (
     <canvas

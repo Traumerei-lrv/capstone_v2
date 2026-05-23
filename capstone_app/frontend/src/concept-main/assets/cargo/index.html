@@ -1,0 +1,78 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cargo Stack Protocol</title>
+  <link rel="stylesheet" href="./style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
+</head>
+<body>
+  <main class="app-shell">
+    <section class="game-pane">
+      <header class="pane-header">
+        <h1>Cargo Stack Protocol</h1>
+        <a class="back-link" href="/playership">Back to Player Ship</a>
+      </header>
+      <div id="game-container" class="game-container" aria-label="Cargo Stack Phaser canvas"></div>
+    </section>
+
+    <aside class="info-pane">
+      <section class="panel">
+        <h2>What is a Stack?</h2>
+        <p>A stack uses LIFO: Last In, First Out.</p>
+        <p>In this mission, cargo already exists and you must rearrange it using stack operations.</p>
+      </section>
+
+      <section class="panel controls-panel">
+        <label for="cargoSelect">Select Cargo Item</label>
+        <div class="control-row">
+          <select id="cargoSelect">
+            <option>Fuel Cell</option>
+            <option>Oxygen Tank</option>
+            <option>Repair Kit</option>
+            <option>Data Core</option>
+            <option>Shield Battery</option>
+            <option>Food Capsule</option>
+          </select>
+        </div>
+        <div class="control-row control-row-wrap">
+          <button id="pushBtn" type="button">Push</button>
+          <button id="popBtn" type="button">Pop</button>
+          <button id="peekBtn" type="button">Peek</button>
+          <button id="resetBtn" type="button">Reset</button>
+        </div>
+      </section>
+
+      <section class="panel stats-panel">
+        <div><strong>Top Cargo:</strong> <span id="topCargo">None</span></div>
+        <div><strong>Stack Size:</strong> <span id="stackSize">0</span></div>
+        <div><strong>Last Action:</strong> <span id="lastAction">Waiting</span></div>
+      </section>
+
+      <section class="panel">
+        <h3>Puzzle Objective</h3>
+        <div class="status-message"><strong>Target Order:</strong> <span id="targetOrder">-</span></div>
+        <div class="status-message"><strong>Current Order:</strong> <span id="currentOrder">-</span></div>
+      </section>
+
+      <section class="panel">
+        <h3>Automation Console</h3>
+        <p>Use one command per line. Examples: <code>PUSH Fuel Cell</code>, <code>POP</code>, <code>PEEK</code>, <code>RESET</code>.</p>
+        <textarea id="codeInput" rows="6" placeholder="PUSH Shield Battery&#10;POP&#10;PUSH Fuel Cell"></textarea>
+        <div class="control-row control-row-wrap">
+          <button id="runCodeBtn" type="button">Run Script</button>
+          <button id="stopCodeBtn" type="button">Stop Script</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h3>Mission Status</h3>
+        <div id="missionStatus" class="status-message">Mission Incomplete: Match the target arrangement.</div>
+      </section>
+    </aside>
+  </main>
+
+  <script src="./script.js"></script>
+</body>
+</html>

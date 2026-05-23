@@ -6,8 +6,8 @@ import Test from './pages/test';
 import StudentDashboard from './pages/StudentDashboard/StudentDashboard';
 import StudentClassPage from './pages/StudentDashboard/StudentClassPage';
 import PlayerShipDashboard from './pages/PlayerShipDashboard';
-import NodeMapOverlay from './pages/NodeMapOverlay';
 import TreeDeliveryDrone from './pages/TreeDeliveryDrone';
+import NodeMapOverlay from './pages/NodeMapOverlay';
 import RecursionPage from './pages/StudentDashboard/missions/Recursion/RecursionPage';
 import IterationPage from './pages/StudentDashboard/missions/Iteration/IterationPage';
 import LinkedListPage from './pages/StudentDashboard/missions/LinkedList/LinkedListPage';
@@ -108,15 +108,11 @@ export default function App() {
         <Route path="/playershipdashboard/linked-list" element={<LinkedListPage />} />
 
         <Route element={<ProtectedRoute currentUser={currentUser} currentRole={currentRole} isCheckingAuth={isCheckingAuth} allowedRoles={['student']} />}>
-<<<<<<< HEAD
-          <Route path="/playershipdashboard" element={<PlayerShipDashboard />} />
-          <Route path="/tree-delivery-drone" element={<TreeDeliveryDrone />} />
           <Route path="/studentdashboard" element={<StudentDashboard />} />
-=======
           <Route path="/playershipdashboard" element={<StudentDashboard />} />
           <Route path="/playershipdashboard/class/:courseId" element={<StudentClassPage />} />
->>>>>>> f30c589 (fix visualization in the student, and fix the teacher dashboard)
           <Route path="/playership" element={<PlayerShipDashboard />} />
+          <Route path="/tree-delivery-drone" element={<TreeDeliveryDrone />} />
           <Route path="/nodemapoverlay" element={<NodeMapOverlay />} />
         </Route>
         <Route element={<ProtectedRoute currentUser={currentUser} currentRole={currentRole} isCheckingAuth={isCheckingAuth} allowedRoles={['instructor']} />}>

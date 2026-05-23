@@ -2,6 +2,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Phaser from "phaser";
 import "./TreeDeliveryDrone.css";
+import galaxy1 from "../concept-main/assets/galaxies/galaxy_circles/galaxy1.png";
+import galaxy2 from "../concept-main/assets/galaxies/galaxy_circles/galaxy2.png";
+import galaxy3 from "../concept-main/assets/galaxies/galaxy_circles/galaxy3.png";
+import galaxy4 from "../concept-main/assets/galaxies/galaxy_circles/galaxy4.png";
+import galaxy5 from "../concept-main/assets/galaxies/galaxy_circles/galaxy5.png";
 
 class TreeNode {
   constructor(value) {
@@ -84,6 +89,9 @@ const TRAVERSAL_LABELS = {
 };
 
 const DEFAULT_VALUES = ["1", "2", "3", "4", "5"];
+const XP_STORAGE_KEY = "balangkas.student.bonus_xp";
+const TREE_GAME_XP_REWARD = 120;
+const GALAXY_TEXTURES = [galaxy1, galaxy2, galaxy3, galaxy4, galaxy5];
 
 export default function TreeDeliveryDrone({ onBack }) {
   const navigate = useNavigate();
@@ -92,8 +100,11 @@ export default function TreeDeliveryDrone({ onBack }) {
   const sceneBridgeRef = useRef(null);
   const latestRootRef = useRef(null);
   const uiCallbackRef = useRef(null);
+  const rewardIssuedRef = useRef(false);
+  const popupTimerRef = useRef(null);
 
   const [nodeInput, setNodeInput] = useState("");
+  const [xpPopup, setXpPopup] = useState(null);
   const [nodeValues, setNodeValues] = useState(DEFAULT_VALUES);
   const [gameInfo, setGameInfo] = useState({
     traversalType: "None",
@@ -113,6 +124,25 @@ export default function TreeDeliveryDrone({ onBack }) {
     setGameInfo((previous) => ({ ...previous, ...nextState }));
   };
 
+  const awardXp = (amount) => {
+    if (typeof window === "undefined") return;
+    const raw = window.localStorage.getItem(XP_STORAGE_KEY);
+    const current = Number.parseInt(raw || "0", 10);
+    const next = (Number.isFinite(current) ? current : 0) + amount;
+    window.localStorage.setItem(XP_STORAGE_KEY, String(next));
+    window.dispatchEvent(new Event("balangkas:xp-updated"));
+  };
+
+  const showXpPopup = (amount) => {
+    setXpPopup(`Traversal Complete! +${amount} XP awarded.`);
+    if (popupTimerRef.current) {
+      clearTimeout(popupTimerRef.current);
+    }
+    popupTimerRef.current = setTimeout(() => {
+      setXpPopup(null);
+    }, 2200);
+  };
+
   useEffect(() => {
     if (!gameContainerRef.current || gameRef.current) return undefined;
 
@@ -128,12 +158,18 @@ export default function TreeDeliveryDrone({ onBack }) {
         this.nodeObjects = new Map();
       }
 
+      preload() {
+        GALAXY_TEXTURES.forEach((texturePath, index) => {
+          this.load.image(`galaxy-${index + 1}`, texturePath);
+        });
+      }
+
       create() {
         this.cameras.main.setBackgroundColor("#060912");
         this.edgeGraphics = this.add.graphics();
         this.nodeGraphics = this.add.graphics();
         this.glowGraphics = this.add.graphics();
-        this.drone = this.add.triangle(450, 88, 0, 20, 28, 10, 0, 0, 0x49e3ff)
+        this.drone = this.add.triangle(450, 88, 0, 20, 28, 10, 0, 0, 0xffdb7a)
           .setStrokeStyle(2, 0xc5fbff, 1);
         this.drone.setDepth(4);
 
@@ -215,28 +251,31 @@ export default function TreeDeliveryDrone({ onBack }) {
 
         const isRoot = node === this.root;
         const isLeaf = !node.left && !node.right;
-        const fillColor = isRoot ? 0x29b3ff : 0x12325f;
-        const strokeColor = isRoot ? 0xd5f2ff : 0x73b5ff;
-        const radius = isRoot ? 30 : 27;
+        const radius = isRoot ? 34 : 30;
+        const textureIndex = (Number.parseInt(String(node.value), 10) || 0) % GALAXY_TEXTURES.length;
 
-        const circle = this.add.circle(node.x, node.y, radius, fillColor, 1);
-        circle.setStrokeStyle(3, strokeColor, 1);
+        const circle = this.add.image(node.x, node.y, `galaxy-${textureIndex + 1}`);
+        circle.setDisplaySize(radius * 2, radius * 2);
+        const baseScaleX = circle.scaleX;
+        const baseScaleY = circle.scaleY;
         circle.setDepth(2);
         circle.setInteractive({ useHandCursor: true });
         circle.on("pointerover", () => {
-          circle.setScale(1.07);
+          circle.setScale(baseScaleX * 1.02, baseScaleY * 1.02);
         });
         circle.on("pointerout", () => {
-          circle.setScale(1);
+          circle.setScale(baseScaleX, baseScaleY);
         });
         circle.on("pointerdown", () => {
           this.handleNodeClick(node);
         });
 
         const label = this.add.text(node.x, node.y, String(node.value), {
-          fontFamily: "monospace",
+          fontFamily: "Pixellari, monospace",
           fontSize: isRoot ? "22px" : "20px",
-          color: "#f0fbff",
+          color: "#f9f4dd",
+          stroke: "#161833",
+          strokeThickness: 4,
         }).setOrigin(0.5);
         label.setDepth(3);
         label.setInteractive({ useHandCursor: true });
@@ -246,8 +285,8 @@ export default function TreeDeliveryDrone({ onBack }) {
 
         let leafGlow = null;
         if (isLeaf) {
-          leafGlow = this.add.circle(node.x, node.y, radius + 8, 0x85d9ff, 0.12);
-          leafGlow.setStrokeStyle(2, 0x85d9ff, 0.6);
+          leafGlow = this.add.circle(node.x, node.y, radius + 8, 0xb091ff, 0.1);
+          leafGlow.setStrokeStyle(2, 0xb091ff, 0.5);
           leafGlow.setDepth(1);
         }
 
@@ -279,6 +318,7 @@ export default function TreeDeliveryDrone({ onBack }) {
 
       startTraversal(type) {
         if (!this.root) return;
+        rewardIssuedRef.current = false;
         this.traversalNodes = this.traversalFor(type);
         this.currentTraversal = type;
         this.currentIndex = 0;
@@ -299,10 +339,8 @@ export default function TreeDeliveryDrone({ onBack }) {
 
       resetNodeColors() {
         this.nodeObjects.forEach((entry) => {
-          const fillColor = entry.isRoot ? 0x29b3ff : 0x12325f;
-          const strokeColor = entry.isRoot ? 0xd5f2ff : 0x73b5ff;
-          entry.circle.setFillStyle(fillColor, 1);
-          entry.circle.setStrokeStyle(3, strokeColor, 1);
+          entry.circle.setTint(0xffffff);
+          entry.circle.setAlpha(1);
         });
       }
 
@@ -324,8 +362,7 @@ export default function TreeDeliveryDrone({ onBack }) {
       handleCorrectNode(node) {
         const visuals = this.nodeObjects.get(node);
         if (visuals) {
-          visuals.circle.setFillStyle(0x24c978, 1);
-          visuals.circle.setStrokeStyle(3, 0xbfffe4, 1);
+          visuals.circle.setTint(0xa2ffd2);
         }
 
         this.moveDroneTo(node, 350);
@@ -335,6 +372,11 @@ export default function TreeDeliveryDrone({ onBack }) {
         const complete = this.currentIndex >= this.traversalNodes.length;
         const nextExpected = complete ? "-" : String(this.traversalNodes[this.currentIndex].value);
         const message = complete ? "Traversal Complete!" : "Correct node!";
+        if (complete && !rewardIssuedRef.current) {
+          rewardIssuedRef.current = true;
+          awardXp(TREE_GAME_XP_REWARD);
+          showXpPopup(TREE_GAME_XP_REWARD);
+        }
 
         this.emitUiState(
           TRAVERSAL_LABELS[this.currentTraversal],
@@ -349,12 +391,9 @@ export default function TreeDeliveryDrone({ onBack }) {
       handleWrongNode(node) {
         const visuals = this.nodeObjects.get(node);
         if (visuals) {
-          visuals.circle.setFillStyle(0xd93b4f, 1);
+          visuals.circle.setTint(0xff8ca0);
           this.time.delayedCall(180, () => {
-            const fillColor = visuals.isRoot ? 0x29b3ff : 0x12325f;
-            const strokeColor = visuals.isRoot ? 0xd5f2ff : 0x73b5ff;
-            visuals.circle.setFillStyle(fillColor, 1);
-            visuals.circle.setStrokeStyle(3, strokeColor, 1);
+            visuals.circle.setTint(0xffffff);
           });
         }
 
@@ -418,6 +457,9 @@ export default function TreeDeliveryDrone({ onBack }) {
     gameRef.current = new Phaser.Game(config);
 
     return () => {
+      if (popupTimerRef.current) {
+        clearTimeout(popupTimerRef.current);
+      }
       sceneBridgeRef.current = null;
       if (gameRef.current) {
         gameRef.current.destroy(true);
@@ -451,6 +493,7 @@ export default function TreeDeliveryDrone({ onBack }) {
   const handleResetTree = () => {
     setNodeValues(DEFAULT_VALUES);
     setNodeInput("");
+    rewardIssuedRef.current = false;
   };
 
   const handleBack = () => {
@@ -460,48 +503,62 @@ export default function TreeDeliveryDrone({ onBack }) {
 
   return (
     <section className="tree-delivery-page">
-      <div className="tree-delivery-shell">
-        <header className="tree-delivery-header">
-          <h1>Tree Delivery Drone</h1>
-          <p>Build a binary tree by level-order insert, then click nodes in the correct traversal path.</p>
-        </header>
-
-        <div className="tree-delivery-controls">
-          <label htmlFor="tree-node-input">Node Value</label>
-          <input
-            id="tree-node-input"
-            type="text"
-            value={nodeInput}
-            maxLength={8}
-            onChange={(event) => setNodeInput(event.target.value)}
-            placeholder="Type node value"
-          />
-          <button type="button" onClick={handleInsert}>Insert Node</button>
-          <button type="button" onClick={() => startTraversal("levelOrder")}>Start Level Order</button>
-          <button type="button" onClick={() => startTraversal("preorder")}>Start Preorder</button>
-          <button type="button" onClick={() => startTraversal("inorder")}>Start Inorder</button>
-          <button type="button" onClick={() => startTraversal("postorder")}>Start Postorder</button>
-          <button type="button" onClick={handleResetTree}>Reset Tree</button>
-          <button type="button" className="tree-delivery-back-btn" onClick={handleBack}>Back</button>
-        </div>
-
-        <div className="tree-delivery-layout">
-          <div className="tree-delivery-panel">
-            <h2>Traversal Briefing</h2>
-            <p><strong>Traversal Type:</strong> {gameInfo.traversalType}</p>
-            <p><strong>Rule:</strong> {gameInfo.traversalRule}</p>
-            <p><strong>Target Order:</strong> {gameInfo.targetOrder.length ? gameInfo.targetOrder.join(" -> ") : "-"}</p>
-            <p><strong>Current Expected Node:</strong> {gameInfo.currentExpected}</p>
-            <p><strong>Score:</strong> {gameInfo.score}</p>
-            <p><strong>Mistakes:</strong> {gameInfo.mistakes}</p>
-            <p className={gameInfo.complete ? "status-complete" : "status-message"}>{gameInfo.message}</p>
-            <p><strong>Current Tree Input:</strong> {nodeValues.join(", ")}</p>
+      <div className="tree-delivery-frame">
+        {xpPopup ? (
+          <div className="tree-xp-popup" role="status" aria-live="polite">
+            {xpPopup}
           </div>
+        ) : null}
+        <main className="tree-delivery-screen">
+          <section className="tree-delivery-panel tree-delivery-panel-left">
+            <div className="tree-delivery-alert">
+              ALERT! Ship traversal route mismatch.
+              <br />
+              Plot and verify galaxy hop order.
+            </div>
 
-          <div className="tree-game-frame">
-            <div ref={gameContainerRef} className="tree-game-canvas" />
-          </div>
-        </div>
+            <div className="tree-delivery-controls">
+              <label htmlFor="tree-node-input">Node Value</label>
+              <input
+                id="tree-node-input"
+                type="text"
+                value={nodeInput}
+                maxLength={8}
+                onChange={(event) => setNodeInput(event.target.value)}
+                placeholder="Type node value"
+              />
+              <div className="tree-delivery-btn-row">
+                <button type="button" className="tree-ctrl" onClick={handleInsert}>Insert Node</button>
+                <button type="button" className="tree-ctrl" onClick={() => startTraversal("levelOrder")}>Start Level Order</button>
+                <button type="button" className="tree-ctrl" onClick={() => startTraversal("preorder")}>Start Preorder</button>
+                <button type="button" className="tree-ctrl" onClick={() => startTraversal("inorder")}>Start Inorder</button>
+                <button type="button" className="tree-ctrl" onClick={() => startTraversal("postorder")}>Start Postorder</button>
+              </div>
+              <div className="tree-delivery-btn-row">
+                <button type="button" className="tree-ctrl tree-ctrl-alt" onClick={handleResetTree}>Reset Tree</button>
+                <button type="button" className="tree-ctrl tree-ctrl-alt" onClick={handleBack}>Back</button>
+              </div>
+            </div>
+
+            <div className="tree-delivery-brief">
+              <h2>Galaxy Travel Briefing</h2>
+              <p><strong>Traversal Type:</strong> {gameInfo.traversalType}</p>
+              <p><strong>Rule:</strong> {gameInfo.traversalRule}</p>
+              <p><strong>Galaxy Hop Plan:</strong> {gameInfo.targetOrder.length ? gameInfo.targetOrder.join(" -> ") : "-"}</p>
+              <p><strong>Current Target Galaxy:</strong> {gameInfo.currentExpected}</p>
+              <p><strong>Score:</strong> {gameInfo.score}</p>
+              <p><strong>Mistakes:</strong> {gameInfo.mistakes}</p>
+              <p className={gameInfo.complete ? "status-complete" : "status-message"}>{gameInfo.message}</p>
+              <p><strong>Current Tree Input:</strong> {nodeValues.join(", ")}</p>
+            </div>
+          </section>
+
+          <section className="tree-delivery-panel tree-delivery-panel-right">
+            <div className="tree-game-frame">
+              <div ref={gameContainerRef} className="tree-game-canvas" />
+            </div>
+          </section>
+        </main>
       </div>
     </section>
   );

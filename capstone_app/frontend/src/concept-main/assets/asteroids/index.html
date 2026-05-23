@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rocket Avoiding Plan</title>
+  <link rel="stylesheet" href="./style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
+</head>
+<body>
+  <main class="app-shell">
+    <section class="game-pane">
+      <header class="pane-header">
+        <h1>Rocket Avoiding Plan</h1>
+        <a class="back-link" href="/playership">Back to Player Ship</a>
+      </header>
+      <div id="game-container" class="game-container"></div>
+    </section>
+
+    <aside class="info-pane">
+      <section class="panel">
+        <h2>DSA Mission Brief</h2>
+        <p style="font-size: 1em; line-height: 1.4em;">
+          The maze is stored as a 2D array. Each coordinate is treated as a node.
+          The ship can only move to neighboring nodes: up, down, left, or right.
+          Safe tiles, blocked tiles, danger tiles, and the exit are all stored as
+          values inside the array. The goal is to find a valid route from the
+          start node to the exit node.
+        </p>
+      </section>
+
+      <section class="panel stats-panel">
+        <div><strong>Current Coordinate:</strong> <span id="current-coordinate">[0,0]</span></div>
+        <div><strong>Array Value:</strong> <span id="array-value">S</span></div>
+        <div><strong>Invalid Attempts:</strong> <span id="invalid-attempts">0</span></div>
+      </section>
+
+      <section class="panel controls-panel">
+        <label for="coordinate-input">Next Coordinate (row,col) or Loop Command</label>
+        <div class="control-row">
+          <input id="coordinate-input" type="text" style="font-size: 1.2rem;" placeholder="2,3 or loop 2: 0,1; 0,2" autocomplete="off" />
+          <button id="move-btn" type="button">Move Ship</button>
+        </div>
+        <div class="control-row control-row-wrap">
+          <button id="hint-btn" type="button">Show BFS Hint</button>
+          <button id="reset-btn" type="button">Reset</button>
+        </div>
+        <div class="control-row control-row-wrap">
+          <select id="grid-size-select" aria-label="Grid size">
+            <option value="5x6">Grid 5 x 6</option>
+            <option value="6x7">Grid 6 x 7</option>
+            <option value="7x8">Grid 7 x 8</option>
+            <option value="8x9">Grid 8 x 9</option>
+          </select>
+          <button id="randomize-btn" type="button">Randomize Route</button>
+          <button id="generate-grid-btn" type="button">Generate Grid</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h3>Route Taken</h3>
+        <div id="route-history" class="route-history">[0,0]</div>
+      </section>
+
+      <section class="panel">
+        <h3>Status</h3>
+        <div id="status-message" class="status-message">Navigation systems online.</div>
+      </section>
+    </aside>
+  </main>
+
+  <script src="./game.js"></script>
+</body>
+</html>

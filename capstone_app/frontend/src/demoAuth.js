@@ -123,18 +123,26 @@ export function registerLocalUser({ firstName, lastName, email, password, role =
   }
 
   const fullName = `${(firstName || '').trim()} ${(lastName || '').trim()}`.trim() || cleanEmail;
-
-  users.push({
-    id: `local-${Date.now()}`,
+  const nowIso = new Date().toISOString();
+  const newUser = {
+    id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     email: cleanEmail,
     password,
+    created_at: nowIso,
+    updated_at: nowIso,
     profile: {
       full_name: fullName,
       role,
     },
-  });
+  };
+
+  users.push(newUser);
 
   writeLocalUsers(users);
+  return {
+    email: newUser.email,
+    profile: newUser.profile,
+  };
 }
 
 export function authenticateLocalUser(email, password) {
@@ -158,6 +166,16 @@ export function authenticateLocalUser(email, password) {
   if (!localMatch) {
     return null;
   }
+
+  const nextUsers = users.map((entry) =>
+    entry.id === localMatch.id
+      ? {
+          ...entry,
+          updated_at: new Date().toISOString(),
+        }
+      : entry,
+  );
+  writeLocalUsers(nextUsers);
 
   return {
     email: localMatch.email,

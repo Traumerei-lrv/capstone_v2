@@ -21,8 +21,7 @@ import UserManagement from './pages/Admin/UserManagement';
 import CoursesSections from './pages/Admin/CoursesSections';
 import Monitoring from './pages/Admin/Monitoring';
 import ContentModeration from './pages/Admin/ContentModeration';
-import BackupRecovery from './pages/Admin/BackupRecovery';
-import Security from './pages/Admin/Security';
+import AdminProfile from './pages/Admin/AdminProfile';
 import useAppFonts from './fonts';
 import { getDemoAuthSession, subscribeToDemoAuthChanges } from './demoAuth';
 
@@ -48,7 +47,7 @@ function ProtectedRoute({ currentUser, currentRole, isCheckingAuth, allowedRoles
   }
 
   if (!currentUser) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   if (allowedRoles?.length && currentRole && !allowedRoles.includes(currentRole)) {
@@ -127,11 +126,11 @@ export default function App() {
         <Route element={<ProtectedRoute currentUser={currentUser} currentRole={currentRole} isCheckingAuth={isCheckingAuth} allowedRoles={['admin']} />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<UserManagement />} />
-            <Route path="courses" element={<CoursesSections />} />
+            <Route path="courses" element={<Navigate to="/admin/classes" replace />} />
+            <Route path="classes" element={<CoursesSections />} />
             <Route path="monitoring" element={<Monitoring />} />
             <Route path="content" element={<ContentModeration />} />
-            <Route path="backup" element={<BackupRecovery />} />
-            <Route path="security" element={<Security />} />
+            <Route path="profile" element={<AdminProfile />} />
           </Route>
         </Route>
         <Route path="/test" element={<Test />} />

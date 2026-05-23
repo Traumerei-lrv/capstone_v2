@@ -55,10 +55,10 @@ export default function LandingPage() {
             Mission Control Academy
           </p>
           <h1 className="text-5xl font-black leading-tight text-white [text-shadow:0_6px_20px_rgba(5,13,29,0.85)] md:text-6xl lg:text-7xl">
-            Master Data Structures And Algorithms Through Space Missions
+            Master Data Structures And Algorithms
           </h1>
           <p className="mt-6 max-w-4xl text-xl leading-relaxed text-blue-100 md:text-2xl">
-            Train as a space crew coder, clear level-based operations, and build real DSA mastery through playful missions, quizzes, and rewards.
+            Learn core DSA concepts through structured lessons, visual examples, and interactive activities.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
@@ -66,7 +66,7 @@ export default function LandingPage() {
               className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-6 py-3 text-sm font-black uppercase tracking-wider text-white transition hover:bg-blue-800"
             >
               <Rocket className="h-4 w-4" />
-              Start Mission
+              Start Learning
             </Link>
             <Link
               to="/login"

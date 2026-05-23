@@ -1,4 +1,5 @@
 import { AlertTriangle, BookOpen, CheckCircle2, Users } from 'lucide-react';
+import useAuth from '../../hooks/useAuth';
 
 const stats = [
   { label: 'Active Classes', value: '6', note: 'Class groups currently handled', icon: BookOpen, tone: 'bg-blue-100 text-blue-600' },
@@ -29,11 +30,15 @@ function StatCard({ stat }) {
 }
 
 export default function InstructorDashboard() {
+  const { user } = useAuth();
+
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-4xl font-black text-blue-900 tracking-tight">Instructor Home</h1>
-        <p className="mt-2 text-slate-500 font-medium">Monitor your current teaching status and jump into class operations quickly.</p>
+        <p className="mt-2 text-slate-500 font-medium">
+          {`Welcome, ${user?.profile?.full_name || 'Instructor'}. Monitor your current teaching status and jump into class operations quickly.`}
+        </p>
       </div>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

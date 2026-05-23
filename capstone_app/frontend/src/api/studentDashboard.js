@@ -1,4 +1,8 @@
 import { supabase } from "../supabase";
+import { getDemoAuthSession } from "../demoAuth";
+
+const INSTRUCTOR_LOCAL_CLASSES_KEY = "balangkas_instructor_classes_v1";
+const LOCAL_CLASS_ENROLLMENTS_KEY = "balangkas_student_class_enrollments_v1";
 
 async function getCurrentUserId() {
   const {
@@ -15,6 +19,76 @@ async function getCurrentUserId() {
   }
 
   return user.id;
+}
+
+function canUseStorage() {
+  return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+}
+
+function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function readLocalInstructorClasses() {
+  if (!canUseStorage()) return [];
+
+  try {
+    const raw = window.localStorage.getItem(INSTRUCTOR_LOCAL_CLASSES_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeLocalInstructorClasses(classes) {
+  if (!canUseStorage()) return;
+  window.localStorage.setItem(INSTRUCTOR_LOCAL_CLASSES_KEY, JSON.stringify(classes));
+}
+
+function readLocalClassEnrollments() {
+  if (!canUseStorage()) return [];
+
+  try {
+    const raw = window.localStorage.getItem(LOCAL_CLASS_ENROLLMENTS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeLocalClassEnrollments(enrollments) {
+  if (!canUseStorage()) return;
+  window.localStorage.setItem(LOCAL_CLASS_ENROLLMENTS_KEY, JSON.stringify(enrollments));
+}
+
+async function resolveStudentIdentity() {
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (!error && user?.id) {
+    return {
+      mode: "supabase",
+      userId: user.id,
+      fullName: user.user_metadata?.full_name || "Student",
+    };
+  }
+
+  const demoSession = getDemoAuthSession();
+  const email = normalizeEmail(demoSession?.email);
+
+  if (!email) {
+    throw new Error("No authenticated student session found.");
+  }
+
+  return {
+    mode: "local",
+    userId: email,
+    fullName: demoSession?.profile?.full_name || "Student",
+  };
 }
 
 function latestByMission(attempts = []) {
@@ -422,7 +496,36 @@ export async function addUserPoints(deltaPoints) {
 }
 
 export async function fetchEnrolledClasses() {
-  const userId = await getCurrentUserId();
+  const identity = await resolveStudentIdentity();
+
+  if (identity.mode === "local") {
+    const classes = readLocalInstructorClasses();
+    const enrollments = readLocalClassEnrollments().filter((entry) => entry.student_id === identity.userId);
+
+    return enrollments
+      .map((entry) => {
+        const classItem = classes.find((item) => item.id === entry.class_id);
+
+        if (!classItem?.id) return null;
+
+        return {
+          enrollmentId: entry.id,
+          enrolledAt: entry.created_at,
+          roleInCourse: "student",
+          courseId: classItem.id,
+          code: classItem.code,
+          title: classItem.name,
+          description: `Section ${classItem.section}`,
+          instructorId: classItem.instructor_id || "local-instructor",
+          instructorName: classItem.instructor_name || "Instructor",
+          createdAt: classItem.created_at || null,
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => new Date(b.enrolledAt || 0) - new Date(a.enrolledAt || 0));
+  }
+
+  const userId = identity.userId;
 
   const { data, error } = await supabase
     .from("course_enrollments")
@@ -472,13 +575,63 @@ export async function fetchEnrolledClasses() {
 }
 
 export async function joinClassByCode(codeInput) {
-  const userId = await getCurrentUserId();
+  const identity = await resolveStudentIdentity();
   const code = String(codeInput || "").trim().toUpperCase();
 
   if (!code) {
     throw new Error("Please enter a class code.");
   }
 
+  if (identity.mode === "local") {
+    const classes = readLocalInstructorClasses();
+    const classItem = classes.find((entry) => String(entry.code || "").toUpperCase() === code);
+
+    if (!classItem?.id) {
+      throw new Error("Invalid class code. Please check and try again.");
+    }
+
+    const enrollments = readLocalClassEnrollments();
+    const existing = enrollments.find((entry) => entry.student_id === identity.userId && entry.class_id === classItem.id);
+
+    if (existing?.id) {
+      return { joined: false, alreadyEnrolled: true, courseId: classItem.id };
+    }
+
+    const nowIso = new Date().toISOString();
+    enrollments.push({
+      id: `LENR-${Date.now()}`,
+      student_id: identity.userId,
+      class_id: classItem.id,
+      role_in_course: "student",
+      created_at: nowIso,
+    });
+    writeLocalClassEnrollments(enrollments);
+
+    const nextClasses = classes.map((entry) => {
+      if (entry.id !== classItem.id) return entry;
+
+      const hasMember = (entry.members || []).some((member) => member.id === identity.userId);
+      if (hasMember) return entry;
+
+      return {
+        ...entry,
+        members: [
+          ...(entry.members || []),
+          {
+            id: identity.userId,
+            name: identity.fullName,
+            status: "Joined",
+          },
+        ],
+      };
+    });
+
+    writeLocalInstructorClasses(nextClasses);
+
+    return { joined: true, alreadyEnrolled: false, courseId: classItem.id };
+  }
+
+  const userId = identity.userId;
   const { data: course, error: courseError } = await supabase
     .from("courses")
     .select("id, code, title")
@@ -522,7 +675,54 @@ export async function joinClassByCode(codeInput) {
 }
 
 export async function fetchClassDetailForStudent(courseId) {
-  const userId = await getCurrentUserId();
+  const identity = await resolveStudentIdentity();
+
+  if (identity.mode === "local") {
+    const enrollments = readLocalClassEnrollments();
+    const enrollment = enrollments.find((entry) => entry.student_id === identity.userId && entry.class_id === courseId);
+
+    if (!enrollment?.id) {
+      throw new Error("You are not enrolled in this class.");
+    }
+
+    const classes = readLocalInstructorClasses();
+    const classItem = classes.find((entry) => entry.id === courseId);
+
+    if (!classItem?.id) {
+      throw new Error("Class not found.");
+    }
+
+    return {
+      course: {
+        id: classItem.id,
+        code: classItem.code,
+        title: classItem.name,
+        description: `Section ${classItem.section}`,
+        instructorId: classItem.instructor_id || "local-instructor",
+        instructorName: classItem.instructor_name || "Instructor",
+        createdAt: classItem.created_at || null,
+        enrolledAt: enrollment.created_at,
+        memberCount: (classItem.members || []).length,
+      },
+      materials: (classItem.materials || []).map((item) => ({
+        id: item.id,
+        title: item.title,
+        type: item.type,
+        url: item.url || "#",
+        created_at: item.uploadedAt,
+        source: "instructor_uploads",
+      })),
+      tasks: (classItem.activities || []).map((item) => ({
+        id: `act-${item.id}`,
+        title: item.title,
+        type: item.type || "Activity",
+        body: `Topic: ${item.topic || "General"}`,
+        created_at: item.assignedAt,
+      })),
+    };
+  }
+
+  const userId = identity.userId;
 
   const { data: enrollment, error: enrollmentError } = await supabase
     .from("course_enrollments")

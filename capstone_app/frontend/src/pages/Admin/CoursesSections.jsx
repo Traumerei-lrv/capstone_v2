@@ -36,8 +36,8 @@ export default function CoursesSections() {
     <div className="space-y-5 p-4 sm:p-5">
       <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Course & Section Management</h2>
-          <p className="mt-1 text-sm text-slate-500">Create, edit, and assign instructors or students across courses and sections.</p>
+          <h2 className="text-lg font-semibold text-slate-900">Class Management</h2>
+          <p className="mt-1 text-sm text-slate-500">Create, edit, and organize classes, then assign instructors or students.</p>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">

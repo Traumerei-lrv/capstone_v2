@@ -21,6 +21,7 @@ import AchievementsTab from './components/AchievementsTab';
 import PerformanceTab from './components/PerformanceTab';
 import ProfileTab from './components/ProfileTab';
 import { clearDemoAuthSession } from '../../demoAuth';
+import useAuth from '../../hooks/useAuth';
 import maskot from '../../assets/img/maskot.png';
 
 /**
@@ -67,15 +68,15 @@ const StatItem = ({ icon: Icon, label, value, color }) => (
   </div>
 );
 
-const UserProfile = () => (
+const UserProfile = ({ user }) => (
   <Card className="mb-6 flex flex-col md:flex-row items-center gap-8 shadow-sm">
     <div className="flex items-center gap-6 flex-1">
       <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center border-2 border-blue-200">
         <User className="w-10 h-10 text-blue-600" />
       </div>
       <div>
-        <h1 className="text-3xl font-black text-blue-900 tracking-tight leading-tight">Recruit Alpha</h1>
-        <p className="text-blue-500 font-bold text-xs uppercase tracking-widest">Algorithm Apprentice</p>
+        <h1 className="text-3xl font-black text-blue-900 tracking-tight leading-tight">{user?.profile?.full_name || 'Recruit'}</h1>
+        <p className="text-blue-500 font-bold text-xs uppercase tracking-widest">{(user?.profile?.role || 'student').toUpperCase()} ACCOUNT</p>
       </div>
     </div>
     
@@ -93,45 +94,64 @@ const UserProfile = () => (
 );
 
 const MissionCard = () => (
-  <Card className="mb-6 border-l-8 border-l-orange-500">
-    <div className="flex items-center gap-2 mb-4">
-      <Award className="w-5 h-5 text-blue-600" />
-      <h2 className="text-lg font-black text-blue-900 uppercase tracking-tight">Recommended Next Mission</h2>
+  <Card className="mb-6 border-l-8 border-l-orange-400">
+    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center gap-2">
+        <Award className="w-5 h-5 text-blue-600" />
+        <h2 className="text-lg font-black text-blue-900 uppercase tracking-tight">Start Here</h2>
+      </div>
+      <span className="w-fit rounded-full bg-blue-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-blue-600">
+        Beginner Friendly
+      </span>
     </div>
-    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 bg-orange-50/30 rounded-xl border border-orange-100">
-      <div>
-        <span className="px-3 py-1 bg-orange-500 text-white text-[10px] font-black uppercase tracking-widest rounded-full mb-3 inline-block">QUEUES</span>
-        <h3 className="text-2xl font-black text-blue-900 mb-2">Master Queue Operations</h3>
-        <div className="flex gap-4">
-          <div className="flex items-center gap-1.5 text-slate-500 font-bold text-xs">
-            <Flame className="w-4 h-4 text-blue-500" /> Medium
-          </div>
-          <div className="flex items-center gap-1.5 text-slate-500 font-bold text-xs">
-            <Clock className="w-4 h-4 text-blue-500" /> 45 min
+    <div className="rounded-xl border border-orange-100 bg-orange-50/40 p-4">
+      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <div className="max-w-2xl">
+          <span className="mb-3 inline-block rounded-full bg-orange-500 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white">Queues</span>
+          <h3 className="mb-2 text-2xl font-black text-blue-900">Learn Queue Basics</h3>
+          <p className="text-sm font-semibold leading-6 text-slate-600">
+            A queue works like a line: the first item that enters is the first item that leaves. This mission walks you through the idea one small step at a time.
+          </p>
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            <div className="rounded-xl border border-orange-100 bg-white px-3 py-2">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">You will learn</p>
+              <p className="mt-1 text-sm font-bold text-blue-900">First in, first out</p>
+            </div>
+            <div className="rounded-xl border border-orange-100 bg-white px-3 py-2">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Difficulty</p>
+              <p className="mt-1 text-sm font-bold text-blue-900">Guided</p>
+            </div>
+            <div className="rounded-xl border border-orange-100 bg-white px-3 py-2">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Time</p>
+              <p className="mt-1 text-sm font-bold text-blue-900">About 20 min</p>
+            </div>
           </div>
         </div>
+        <button className="flex w-full items-center justify-center gap-3 rounded-xl bg-orange-500 px-6 py-4 text-sm font-black uppercase tracking-wider text-white shadow-lg shadow-orange-500/20 transition-all hover:bg-orange-600 active:scale-95 md:w-auto">
+          Begin Lesson <ChevronRight className="w-5 h-5" />
+        </button>
       </div>
-      <button className="bg-orange-500 hover:bg-orange-600 active:scale-95 transition-all text-white font-black px-8 py-4 rounded-xl flex items-center gap-3 uppercase tracking-wider shadow-lg shadow-orange-500/20">
-        Start Mission <ChevronRight className="w-5 h-5" />
-      </button>
     </div>
   </Card>
 );
 
-const DailyMissionItem = ({ title, progress, total, xp }) => (
+const DailyMissionItem = ({ title, description, progress, total, xp }) => (
   <div className="py-4 first:pt-0 last:pb-0">
-    <div className="flex justify-between items-center mb-3">
-      <p className="font-bold text-blue-900">{title}</p>
-      <span className="text-xs font-black text-blue-600">+{xp} XP</span>
+    <div className="mb-3 flex items-start justify-between gap-3">
+      <div>
+        <p className="font-bold text-blue-900">{title}</p>
+        <p className="mt-1 text-xs font-semibold text-slate-500">{description}</p>
+      </div>
+      <span className="shrink-0 rounded-full bg-blue-50 px-2 py-1 text-xs font-black text-blue-600">+{xp} XP</span>
     </div>
     <div className="flex items-center gap-4">
-      <div className="flex-1 h-3 bg-blue-50 rounded-full overflow-hidden">
+      <div className="h-3 flex-1 overflow-hidden rounded-full bg-blue-50">
         <div 
-          className="h-full bg-blue-800 rounded-full" 
+          className="h-full rounded-full bg-blue-700" 
           style={{ width: `${(progress/total)*100}%` }}
         />
       </div>
-      <span className="text-[10px] font-black text-slate-400 whitespace-nowrap">{progress} / {total}</span>
+      <span className="whitespace-nowrap text-[10px] font-black text-slate-400">{progress} / {total}</span>
     </div>
   </div>
 );
@@ -326,7 +346,7 @@ const toDateLabel = (value) => {
   });
 };
 
-const Header = ({ selectedTab, setSelectedTab }) => (
+const Header = ({ selectedTab, setSelectedTab, user }) => (
   <header className="bg-[#5089c6] border-b-2 border-blue-700 sticky top-0 z-50">
     <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
       <div className="flex items-center gap-8">
@@ -369,6 +389,10 @@ const Header = ({ selectedTab, setSelectedTab }) => (
         </nav>
       </div>
       <div className="flex items-center gap-4 text-white">
+        <div className="hidden text-right md:block">
+          <p className="text-xs font-semibold uppercase tracking-wider text-blue-100">Signed in as</p>
+          <p className="text-sm font-bold">{user?.profile?.full_name || 'Student'}</p>
+        </div>
         <button className="p-2 hover:bg-blue-600 rounded-full transition-colors relative">
           <Bell className="w-5 h-5" />
           <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-orange-500 border-2 border-blue-700 rounded-full"></span>
@@ -390,6 +414,7 @@ const Header = ({ selectedTab, setSelectedTab }) => (
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [selectedTab, setSelectedTab] = useState('home');
   const [materialFilter, setMaterialFilter] = useState('All');
 
@@ -453,7 +478,7 @@ const Dashboard = () => {
     }
 
     if (selectedTab === 'profile') {
-      return <ProfileTab onLogout={handleLogout} />;
+      return <ProfileTab onLogout={handleLogout} user={user} />;
     }
 
     return (
@@ -485,7 +510,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <UserProfile />
+        <UserProfile user={user} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Column */}
@@ -496,7 +521,7 @@ const Dashboard = () => {
               <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-blue-600" />
-                  <h2 className="text-lg font-black text-blue-900 uppercase tracking-tight">Daily Missions</h2>
+                  <h2 className="text-lg font-black text-blue-900 uppercase tracking-tight">Today&apos;s Small Steps</h2>
                 </div>
                 <div className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-bold text-slate-500 tracking-wider">
                   RESETS IN 8H 42M
@@ -504,9 +529,9 @@ const Dashboard = () => {
               </div>
 
               <div className="divide-y divide-blue-50">
-                <DailyMissionItem title="Complete 3 lessons" progress={2} total={3} xp={150} />
-                <DailyMissionItem title="Score 90% on a quiz" progress={0} total={1} xp={200} />
-                <DailyMissionItem title="Practice for 30 minutes" progress={18} total={30} xp={100} />
+                <DailyMissionItem title="Finish 3 short lessons" description="Learn a little at a time. You already finished 2." progress={2} total={3} xp={150} />
+                <DailyMissionItem title="Try one quick quiz" description="It is okay if you miss items. The goal is practice." progress={0} total={1} xp={200} />
+                <DailyMissionItem title="Practice for 30 minutes" description="Any focused practice counts toward your progress." progress={18} total={30} xp={100} />
               </div>
             </Card>
           </div>
@@ -522,7 +547,7 @@ const Dashboard = () => {
                 <LeaderboardItem rank={1} name="AlgoMaster" xp="8500" />
                 <LeaderboardItem rank={2} name="CodeNinja" xp="7200" />
                 <LeaderboardItem rank={3} name="DataWizard" xp="6800" />
-                <LeaderboardItem rank={4} name="You (Alpha)" xp="1250" isUser />
+                <LeaderboardItem rank={4} name={`You (${user?.profile?.full_name || 'Pilot'})`} xp="1250" isUser />
               </div>
               <button className="w-full py-3 text-sm font-black text-blue-600 uppercase tracking-widest border-t-2 border-blue-50 hover:bg-blue-50 transition-colors rounded-b-xl">
                 View Full Rankings
@@ -563,7 +588,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-[#f9f9ff] text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900">
-      <Header selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
+      <Header selectedTab={selectedTab} setSelectedTab={setSelectedTab} user={user} />
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         {renderActiveTab()}

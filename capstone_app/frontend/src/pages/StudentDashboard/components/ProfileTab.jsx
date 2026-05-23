@@ -62,14 +62,24 @@ const Badge = ({ title, detail, icon: Icon, locked }) => (
   </div>
 );
 
-export default function ProfileTab({ onLogout }) {
+function toTitleCase(value) {
+  if (!value) return '';
+  return value
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ');
+}
+
+export default function ProfileTab({ onLogout, user }) {
+  const role = user?.profile?.role || 'student';
   const profile = {
-    name: 'Recruit Alpha',
-    title: 'Algorithm Apprentice',
-    email: 'alpha.recruit@balangkas.edu',
-    cohort: 'Section A-12',
-    base: 'Mission Class Command',
-    joined: 'May 2026',
+    name: user?.profile?.full_name || 'Recruit',
+    title: `${toTitleCase(role)} Account`,
+    email: user?.email || 'No email',
+    cohort: role === 'instructor' ? 'Instructor Cohort' : role === 'admin' ? 'Admin Control Group' : 'Student Cohort',
+    base: role === 'instructor' ? 'Instructor Command' : role === 'admin' ? 'Admin Operations Hub' : 'Mission Class Command',
+    joined: 'Local Account',
   };
 
   return (
@@ -90,7 +100,7 @@ export default function ProfileTab({ onLogout }) {
               </div>
               <div>
                 <p className="mb-2 inline-flex rounded-md bg-[#fdc500] px-3 py-1 text-[10px] font-black uppercase tracking-widest text-blue-900">
-                  Level 5 Pilot
+                  {toTitleCase(role)} Profile
                 </p>
                 <h1 className="text-4xl font-black tracking-tight">{profile.name}</h1>
                 <p className="mt-1 text-sm font-bold uppercase tracking-widest text-blue-100">{profile.title}</p>
@@ -121,48 +131,52 @@ export default function ProfileTab({ onLogout }) {
         </div>
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <ProfileMetric icon={Trophy} label="Level" value="5" tone="bg-blue-100 text-blue-600" />
-        <ProfileMetric icon={Coins} label="Coins" value="4,500" tone="bg-orange-100 text-orange-600" />
-        <ProfileMetric icon={Flame} label="Streak" value="7 days" tone="bg-red-100 text-red-600" />
-        <ProfileMetric icon={Award} label="Badges" value="12" tone="bg-emerald-100 text-emerald-600" />
-      </div>
+      {role === 'student' ? (
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <ProfileMetric icon={Trophy} label="Level" value="5" tone="bg-blue-100 text-blue-600" />
+          <ProfileMetric icon={Coins} label="Coins" value="4,500" tone="bg-orange-100 text-orange-600" />
+          <ProfileMetric icon={Flame} label="Streak" value="7 days" tone="bg-red-100 text-red-600" />
+          <ProfileMetric icon={Award} label="Badges" value="12" tone="bg-emerald-100 text-emerald-600" />
+        </div>
+      ) : null}
 
-      <div className="grid gap-8 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <div className="mb-6 flex items-center justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-black tracking-tight text-blue-900">Mission Progress</h2>
-              <p className="mt-1 text-sm font-medium text-slate-500">Current technical readiness across active learning paths.</p>
+      {role === 'student' ? (
+        <div className="grid gap-8 lg:grid-cols-3">
+          <Card className="lg:col-span-2">
+            <div className="mb-6 flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-black tracking-tight text-blue-900">Mission Progress</h2>
+                <p className="mt-1 text-sm font-medium text-slate-500">Current technical readiness across active learning paths.</p>
+              </div>
+              <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-blue-600">
+                1,250 / 3,250 XP
+              </span>
             </div>
-            <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-blue-600">
-              1,250 / 3,250 XP
-            </span>
-          </div>
-          <div className="space-y-5">
-            <SkillBar label="Recursion Relay" value={82} />
-            <SkillBar label="Iteration Forge" value={64} />
-            <SkillBar label="Linked List Link-up" value={51} />
-            <SkillBar label="Assessment Accuracy" value={87} />
-          </div>
-        </Card>
+            <div className="space-y-5">
+              <SkillBar label="Recursion Relay" value={82} />
+              <SkillBar label="Iteration Forge" value={64} />
+              <SkillBar label="Linked List Link-up" value={51} />
+              <SkillBar label="Assessment Accuracy" value={87} />
+            </div>
+          </Card>
 
-        <Card>
-          <div className="mb-6 flex items-center gap-3">
-            <BookOpen className="h-5 w-5 text-blue-600" />
-            <h2 className="text-xl font-black tracking-tight text-blue-900">Current Class</h2>
-          </div>
-          <div className="rounded-2xl bg-blue-50 p-5">
-            <p className="text-[10px] font-black uppercase tracking-widest text-blue-500">Enrolled Fleet</p>
-            <h3 className="mt-2 text-xl font-black text-blue-900">Advanced Propulsion Systems</h3>
-            <p className="mt-2 text-xs font-bold uppercase tracking-wider text-slate-500">Instructor: Cmdr. Elias Vance</p>
-            <div className="mt-5 flex items-center justify-between border-t border-blue-100 pt-4">
-              <span className="text-xs font-black uppercase tracking-widest text-blue-600">24/30 Enrolled</span>
-              <CheckCircle className="h-5 w-5 text-emerald-500" />
+          <Card>
+            <div className="mb-6 flex items-center gap-3">
+              <BookOpen className="h-5 w-5 text-blue-600" />
+              <h2 className="text-xl font-black tracking-tight text-blue-900">Current Class</h2>
             </div>
-          </div>
-        </Card>
-      </div>
+            <div className="rounded-2xl bg-blue-50 p-5">
+              <p className="text-[10px] font-black uppercase tracking-widest text-blue-500">Enrolled Fleet</p>
+              <h3 className="mt-2 text-xl font-black text-blue-900">Advanced Propulsion Systems</h3>
+              <p className="mt-2 text-xs font-bold uppercase tracking-wider text-slate-500">Instructor: Cmdr. Elias Vance</p>
+              <div className="mt-5 flex items-center justify-between border-t border-blue-100 pt-4">
+                <span className="text-xs font-black uppercase tracking-widest text-blue-600">24/30 Enrolled</span>
+                <CheckCircle className="h-5 w-5 text-emerald-500" />
+              </div>
+            </div>
+          </Card>
+        </div>
+      ) : null}
 
       <Card>
         <div className="mb-6">

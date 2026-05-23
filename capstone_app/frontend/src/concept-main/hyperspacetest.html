@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Phaser Hyperspace Background</title>
+
+<script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"></script>
+
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: black;
+    }
+
+    canvas {
+        display: block;
+    }
+</style>
+</head>
+<body>
+
+<script>
+class SpaceScene extends Phaser.Scene {
+    constructor() {
+        super('SpaceScene');
+
+        this.stars = [];
+    }
+
+    create() {
+        const width = this.scale.width;
+        const height = this.scale.height;
+
+        this.centerX = width / 2;
+        this.centerY = height / 2;
+
+        // Amount of stars
+        this.starCount = 2000;
+
+        for (let i = 0; i < this.starCount; i++) {
+            this.stars.push(this.createStar());
+        }
+
+        // Graphics renderer
+        this.graphics = this.add.graphics();
+
+        // Speed control
+        this.speed = 1;
+    }
+
+    createStar() {
+        return {
+            x: Phaser.Math.Between(-this.scale.width, this.scale.width),
+            y: Phaser.Math.Between(-this.scale.height, this.scale.height),
+            z: Phaser.Math.FloatBetween(0.1, 1)
+        };
+    }
+
+    resetStar(star) {
+        star.x = Phaser.Math.Between(-this.scale.width, this.scale.width);
+        star.y = Phaser.Math.Between(-this.scale.height, this.scale.height);
+        star.z = 0.1;
+    }
+
+    update() {
+        const width = this.scale.width;
+        const height = this.scale.height;
+
+        this.graphics.clear();
+
+        // Slight transparent overlay for soft motion trails
+        this.graphics.fillStyle(0x000000, 0.28);
+        this.graphics.fillRect(0, 0, width, height);
+
+        for (let star of this.stars) {
+
+            // Previous position for blur trail
+            const prevX = this.centerX + (star.x / star.z);
+            const prevY = this.centerY + (star.y / star.z);
+
+            // Move star toward camera
+            star.z -= 0.0035 * this.speed;
+
+            if (star.z <= 0.001) {
+                this.resetStar(star);
+                continue;
+            }
+
+            // Current projected position
+            const sx = this.centerX + (star.x / star.z);
+            const sy = this.centerY + (star.y / star.z);
+
+            // If outside screen, recycle
+            if (
+                sx < -200 || sx > width + 200 ||
+                sy < -200 || sy > height + 200
+            ) {
+                this.resetStar(star);
+                continue;
+            }
+
+            // Brightness based on depth
+            const brightness = Phaser.Math.Clamp(1 - star.z, 0.2, 1);
+
+            // Motion blur line
+            this.graphics.lineStyle(
+                Math.max(1, brightness * 3),
+                0xffffff,
+                brightness
+            );
+
+            this.graphics.beginPath();
+            this.graphics.moveTo(prevX, prevY);
+            this.graphics.lineTo(sx, sy);
+            this.graphics.strokePath();
+
+            // Star core
+            this.graphics.fillStyle(0xffffff, brightness);
+
+            const size = Math.max(1, brightness * 2.5);
+
+            this.graphics.fillCircle(sx, sy, size);
+        }
+    }
+}
+
+const config = {
+    type: Phaser.AUTO,
+    width: window.innerWidth,
+    height: window.innerHeight,
+    backgroundColor: '#000000',
+    scene: SpaceScene
+};
+
+const game = new Phaser.Game(config);
+
+window.addEventListener('resize', () => {
+    game.scale.resize(window.innerWidth, window.innerHeight);
+});
+</script>
+
+</body>
+</html>

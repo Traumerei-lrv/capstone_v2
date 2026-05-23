@@ -55,8 +55,6 @@ export default function LoginPage() {
     }
 
     setIsLoading(true);
-    let routeAfterLogin = '/playershipdashboard';
-
     try {
       if (isSignup) {
         registerLocalUser({
@@ -73,7 +71,6 @@ export default function LoginPage() {
         setDemoAuthSession(localSession);
         setMessage('Account created successfully.');
         authSucceeded = true;
-        routeAfterLogin = '/playershipdashboard';
       } else {
         const session = authenticateLocalUser(email, password);
         if (!session) {
@@ -82,20 +79,14 @@ export default function LoginPage() {
         setDemoAuthSession(session);
         setMessage('Login successful.');
         authSucceeded = true;
-        if (session.profile?.role === 'admin') {
-          routeAfterLogin = '/admin';
-        } else if (session.profile?.role === 'instructor') {
-          routeAfterLogin = '/instructor';
-        } else {
-          routeAfterLogin = '/playershipdashboard';
-        }
       }
     } catch (authError) {
       setError(authError.message || 'Authentication failed.');
     } finally {
       setIsLoading(false);
       if (authSucceeded) {
-        navigate(routeAfterLogin, { replace: true });
+        // Route to root and let App resolve role-based destination from fresh auth state.
+        navigate('/', { replace: true });
       }
     }
   };

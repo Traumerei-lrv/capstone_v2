@@ -30,7 +30,7 @@ function getHomeRoute(role) {
     return '/admin';
   }
 
-  return role === 'instructor' ? '/instructor' : '/playershipdashboard';
+  return role === 'instructor' ? '/instructor' : '/studentdashboard';
 }
 
 function ProtectedRoute({ currentUser, currentRole, isCheckingAuth, allowedRoles }) {
@@ -100,7 +100,7 @@ export default function App() {
         />
         <Route
           path="/login"
-          element={isCheckingAuth ? <LoadingScreen /> : currentUser ? <Navigate to={getHomeRoute(currentRole)} replace /> : <LoginPage />}
+          element={isCheckingAuth ? <LoadingScreen /> : <LoginPage />}
         />
         {/* Public mission previews: allow viewing pre-test and intro without signing in */}
         <Route path="/playershipdashboard/recursion" element={<RecursionPage />} />

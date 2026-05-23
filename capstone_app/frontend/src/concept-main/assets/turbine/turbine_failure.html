@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Turbine Linked List Console</title>
+  <link rel="stylesheet" href="./turbine_failure.css" />
+</head>
+<body>
+  <div class="frame">
+    <main class="screen">
+      <!-- LEFT PANEL -->
+      <section class="panel panel-left">
+        <div class="alert">
+          ERROR! Hyperspace turbine linked list broken.<br />
+          Reconnect HEAD, nodes, and TAIL.
+        </div>
+
+        <div class="turbine-wrap">
+          <img
+            id="turbineStatus"
+            src="assets/turbine/turbine_error.png"
+            alt="Turbine state"
+          />
+        </div>
+
+        <div class="stats">
+          <div>
+            <strong>Required Linked List:</strong>
+            HEAD → L1 → L2 → L3 → L4 → L5 → TAIL
+          </div>
+
+          <div class="progress">
+            <div id="repairFill" class="progress-fill"></div>
+          </div>
+
+          <div id="tipText">
+            Tip: The list head must start at L1, every node must point to the
+            next node, and the tail must end at L5.
+          </div>
+        </div>
+
+        <!-- MOVED CONSOLE HERE -->
+        <div class="console">
+
+          <div class="btn-row">
+            <button id="shuffleBtn" class="ctrl alt" type="button">
+              Scramble Nodes
+            </button>
+            <textarea id="code" class="io" spellcheck="false"></textarea>
+            <button id="resetBtn" class="ctrl alt" type="button">
+              Reset
+            </button>
+
+            <button id="runBtn" class="ctrl" type="button">
+              Run Diagnostics
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT PANEL -->
+      <section class="panel panel-right">
+        <div class="loop-viz">
+          <div class="ring-canvas" id="ring"></div>
+        </div>
+          <div><strong>Linked List Nodes Drag to Rearrange:</strong></div>
+          <div id="queue" class="queue"></div>
+          <div class="status-line" id="statusLine">
+            System waiting for linked list diagnostics...
+          </div>
+
+          <div class="diagnostic-log" id="diagnosticLog">
+            Console ready.
+          </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="./turbine_failure.js"></script>
+</body>
+</html>

@@ -108,9 +108,19 @@ export default function App() {
         <Route path="/playershipdashboard/linked-list" element={<LinkedListPage />} />
 
         <Route element={<ProtectedRoute currentUser={currentUser} currentRole={currentRole} isCheckingAuth={isCheckingAuth} allowedRoles={['student']} />}>
+<<<<<<< HEAD
           <Route path="/playershipdashboard" element={<StudentDashboard />} />
           <Route path="/playershipdashboard/class/:courseId" element={<StudentClassPage />} />
+=======
+<<<<<<< HEAD
+          <Route path="/playershipdashboard" element={<PlayerShipDashboard />} />
+          <Route path="/tree-delivery-drone" element={<TreeDeliveryDrone />} />
+>>>>>>> lee-branch
           <Route path="/studentdashboard" element={<StudentDashboard />} />
+=======
+          <Route path="/playershipdashboard" element={<StudentDashboard />} />
+          <Route path="/playershipdashboard/class/:courseId" element={<StudentClassPage />} />
+>>>>>>> f30c589 (fix visualization in the student, and fix the teacher dashboard)
           <Route path="/playership" element={<PlayerShipDashboard />} />
           <Route path="/nodemapoverlay" element={<NodeMapOverlay />} />
         </Route>

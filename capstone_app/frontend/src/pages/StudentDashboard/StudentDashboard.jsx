@@ -11,8 +11,7 @@ import {
   CheckCircle, 
   BookOpen, 
   Clock,
-  History,
-  Layout
+  History
 } from 'lucide-react';
 
 import MissionsTab from './components/MissionsTab';
@@ -39,6 +38,7 @@ const Card = ({ children, className = "" }) => (
 );
 
 const BONUS_XP_STORAGE_KEY = 'balangkas.student.bonus_xp';
+const STUDENT_SCOREBOARD_STORAGE_KEY = 'balangkas.student.scoreboard';
 const BASE_STUDENT_XP = 1250;
 const LEVEL_TARGET_XP = 3250;
 
@@ -97,7 +97,7 @@ const UserProfile = ({ user, points }) => (
   </Card>
 );
 
-const MissionCard = () => (
+const MissionCard = ({ mission, navigate }) => (
   <Card className="mb-6 border-l-8 border-l-orange-400">
     <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-2">
@@ -111,19 +111,19 @@ const MissionCard = () => (
     <div className="rounded-xl border border-orange-100 bg-orange-50/40 p-4">
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div className="max-w-2xl">
-          <span className="mb-3 inline-block rounded-full bg-orange-500 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white">Queues</span>
-          <h3 className="mb-2 text-2xl font-black text-blue-900">Learn Queue Basics</h3>
+          <span className="mb-3 inline-block rounded-full bg-orange-500 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white">Introduction</span>
+          <h3 className="mb-2 text-2xl font-black text-blue-900">Introduction to DSA</h3>
           <p className="text-sm font-semibold leading-6 text-slate-600">
-            A queue works like a line: the first item that enters is the first item that leaves. This mission walks you through the idea one small step at a time.
+            Build your foundation first. Learn what data structures are, how they are organized, and how algorithms solve problems step by step.
           </p>
           <div className="mt-4 grid gap-2 sm:grid-cols-3">
             <div className="rounded-xl border border-orange-100 bg-white px-3 py-2">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">You will learn</p>
-              <p className="mt-1 text-sm font-bold text-blue-900">First in, first out</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Progress</p>
+              <p className="mt-1 text-sm font-bold text-blue-900">{mission.progressPercent}% complete</p>
             </div>
             <div className="rounded-xl border border-orange-100 bg-white px-3 py-2">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Difficulty</p>
-              <p className="mt-1 text-sm font-bold text-blue-900">Guided</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Checkpoints</p>
+              <p className="mt-1 text-sm font-bold text-blue-900">{mission.completedCount}/{mission.missionCount} done</p>
             </div>
             <div className="rounded-xl border border-orange-100 bg-white px-3 py-2">
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Time</p>
@@ -131,8 +131,12 @@ const MissionCard = () => (
             </div>
           </div>
         </div>
-        <button className="flex w-full items-center justify-center gap-3 rounded-xl bg-orange-500 px-6 py-4 text-sm font-black uppercase tracking-wider text-white shadow-lg shadow-orange-500/20 transition-all hover:bg-orange-600 active:scale-95 md:w-auto">
-          Begin Lesson <ChevronRight className="w-5 h-5" />
+        <button
+          type="button"
+          onClick={() => mission.path && navigate(mission.path)}
+          className="flex w-full items-center justify-center gap-3 rounded-xl bg-orange-500 px-6 py-4 text-sm font-black uppercase tracking-wider text-white shadow-lg shadow-orange-500/20 transition-all hover:bg-orange-600 active:scale-95 md:w-auto"
+        >
+          {mission.progressPercent > 0 ? 'Continue Lesson' : 'Begin Lesson'} <ChevronRight className="w-5 h-5" />
         </button>
       </div>
     </div>
@@ -197,11 +201,11 @@ const missionCards = [
     key: 'introduction',
     title: 'Introduction',
     description: 'Start here to learn the mission map, navigation rules, and basic controls.',
-    status: 'Completed',
-    path: null,
-    progressPercent: 100,
-    completedCount: 1,
-    missionCount: 1,
+    status: 'Active',
+    path: '/playershipdashboard/introduction',
+    progressPercent: 0,
+    completedCount: 0,
+    missionCount: 2,
   },
   {
     key: 'recursion',
@@ -216,27 +220,27 @@ const missionCards = [
   {
     key: 'iteration',
     title: 'Iteration Forge',
-    description: 'Reinforce loops, counters, and repetition-based problem solving.',
-    status: 'Active',
-    path: '/playershipdashboard/iteration',
-    progressPercent: 64,
-    completedCount: 3,
+    description: 'Locked.',
+    status: 'Locked',
+    path: null,
+    progressPercent: 0,
+    completedCount: 0,
     missionCount: 5,
   },
   {
     key: 'linked-list',
     title: 'Linked List Link-up',
-    description: 'Practice node traversal, insertion, deletion, and pointer logic.',
-    status: 'Active',
-    path: '/playershipdashboard/linked-list',
-    progressPercent: 51,
-    completedCount: 2,
+    description: 'Locked.',
+    status: 'Locked',
+    path: null,
+    progressPercent: 0,
+    completedCount: 0,
     missionCount: 5,
   },
   {
     key: 'stack',
     title: 'Stack Tower',
-    description: 'Locked stage for stack operations and last-in, first-out thinking.',
+    description: 'Locked.',
     status: 'Locked',
     path: null,
     progressPercent: 0,
@@ -246,7 +250,7 @@ const missionCards = [
   {
     key: 'queue',
     title: 'Queue Station',
-    description: 'Locked stage for first-in, first-out control and scheduling.',
+    description: 'Locked.',
     status: 'Locked',
     path: null,
     progressPercent: 0,
@@ -256,7 +260,7 @@ const missionCards = [
   {
     key: 'tree',
     title: 'Tree Realm',
-    description: 'Locked stage for hierarchical traversal and branching patterns.',
+    description: 'Locked.',
     status: 'Locked',
     path: null,
     progressPercent: 0,
@@ -266,7 +270,7 @@ const missionCards = [
   {
     key: 'heap',
     title: 'Heap Mountain',
-    description: 'Locked stage for priority-based structures and heap ordering.',
+    description: 'Locked.',
     status: 'Locked',
     path: null,
     progressPercent: 0,
@@ -276,7 +280,7 @@ const missionCards = [
   {
     key: 'graph',
     title: 'Graph Universe',
-    description: 'Locked stage for networks, paths, and graph traversal.',
+    description: 'Locked.',
     status: 'Locked',
     path: null,
     progressPercent: 0,
@@ -286,7 +290,7 @@ const missionCards = [
   {
     key: 'dp',
     title: 'Dynamic Core',
-    description: 'Locked stage for dynamic programming and optimization.',
+    description: 'Locked.',
     status: 'Locked',
     path: null,
     progressPercent: 0,
@@ -350,16 +354,10 @@ const toDateLabel = (value) => {
   });
 };
 
-const Header = ({ selectedTab, setSelectedTab, user }) => (
+const Header = ({ selectedTab, setSelectedTab }) => (
   <header className="bg-[#5089c6] border-b-2 border-blue-700 sticky top-0 z-50">
     <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-      <div className="flex items-center gap-8">
-        <button type="button" onClick={() => setSelectedTab('home')} className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
-            <Layout className="text-[#5089c6] w-5 h-5" />
-          </div>
-          <span className="text-white font-black text-2xl tracking-tighter italic">BALANGKAS</span>
-        </button>
+      <div className="flex items-center">
         <nav className="hidden md:flex items-center gap-6">
           <button
             type="button"
@@ -393,10 +391,6 @@ const Header = ({ selectedTab, setSelectedTab, user }) => (
         </nav>
       </div>
       <div className="flex items-center gap-4 text-white">
-        <div className="hidden text-right md:block">
-          <p className="text-xs font-semibold uppercase tracking-wider text-blue-100">Signed in as</p>
-          <p className="text-sm font-bold">{user?.profile?.full_name || 'Student'}</p>
-        </div>
         <button className="p-2 hover:bg-blue-600 rounded-full transition-colors relative">
           <Bell className="w-5 h-5" />
           <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-orange-500 border-2 border-blue-700 rounded-full"></span>
@@ -422,6 +416,7 @@ const Dashboard = () => {
   const [selectedTab, setSelectedTab] = useState('home');
   const [materialFilter, setMaterialFilter] = useState('All');
   const [bonusXp, setBonusXp] = useState(0);
+  const [scoreboard, setScoreboard] = useState({});
 
   useEffect(() => {
     const loadBonusXp = () => {
@@ -439,6 +434,42 @@ const Dashboard = () => {
       window.removeEventListener('storage', loadBonusXp);
       window.removeEventListener('balangkas:xp-updated', loadBonusXp);
       document.removeEventListener('visibilitychange', loadBonusXp);
+    };
+  }, []);
+
+  useEffect(() => {
+    const loadScoreboard = () => {
+      try {
+        const raw = window.localStorage.getItem(STUDENT_SCOREBOARD_STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : {};
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+          setScoreboard({});
+          return;
+        }
+        setScoreboard(parsed);
+      } catch (error) {
+        setScoreboard({});
+      }
+    };
+
+    const handleScoreboardUpdated = (event) => {
+      const detail = event?.detail;
+      if (!detail || typeof detail !== 'object' || Array.isArray(detail)) {
+        loadScoreboard();
+        return;
+      }
+      setScoreboard(detail);
+    };
+
+    loadScoreboard();
+    window.addEventListener('storage', loadScoreboard);
+    window.addEventListener('focus', loadScoreboard);
+    window.addEventListener('balangkas:scoreboard-updated', handleScoreboardUpdated);
+
+    return () => {
+      window.removeEventListener('storage', loadScoreboard);
+      window.removeEventListener('focus', loadScoreboard);
+      window.removeEventListener('balangkas:scoreboard-updated', handleScoreboardUpdated);
     };
   }, []);
 
@@ -467,6 +498,23 @@ const Dashboard = () => {
 
   const points = BASE_STUDENT_XP + bonusXp;
   const xpProgress = Math.min(100, Math.round((points / LEVEL_TARGET_XP) * 100));
+  const introductionMission = useMemo(() => {
+    const baseMission = missionCards.find((mission) => mission.key === 'introduction') || missionCards[0];
+    const introScores = scoreboard?.introduction && typeof scoreboard.introduction === 'object' ? scoreboard.introduction : {};
+    const hasPre = Number.isFinite(introScores.preTestScore);
+    const hasPost = Number.isFinite(introScores.postTestScore);
+    const completedCount = (hasPre ? 1 : 0) + (hasPost ? 1 : 0);
+    const missionCount = 2;
+    const progressPercent = Math.round((completedCount / missionCount) * 100);
+
+    return {
+      ...baseMission,
+      completedCount,
+      missionCount,
+      progressPercent,
+      status: progressPercent >= 100 ? 'Completed' : 'Active',
+    };
+  }, [scoreboard]);
 
   const loadDashboard = () => {
     setSelectedTab((currentTab) => currentTab);
@@ -522,7 +570,7 @@ const Dashboard = () => {
               <div className="relative rounded-2xl border-2 border-blue-200 bg-white px-5 py-4 shadow-md">
                 <p className="mb-1 text-[10px] font-black uppercase tracking-[0.2em] text-blue-500">Mission Control</p>
                 <p className="text-sm font-semibold leading-relaxed text-blue-950">
-                  DSA mission update: you&apos;re doing great on arrays and recursion. Next target is stacks and queues to strengthen your problem-solving flow.
+                  Hello {user?.profile?.full_name ? user.profile.full_name.split(' ')[0] : 'Pilot'}! Ready to embark on your DSA journey?
                   <span className="ml-1 inline-block h-3.5 w-1.5 bg-blue-700 align-[-1px] animate-[dialogCursor_0.95s_steps(1,end)_infinite]"></span>
                 </p>
               </div>
@@ -539,7 +587,7 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Column */}
           <div className="lg:col-span-2 space-y-8">
-            <MissionCard />
+            <MissionCard mission={introductionMission} navigate={navigate} />
 
             <Card>
               <div className="flex justify-between items-center mb-6">
@@ -612,7 +660,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-[#f9f9ff] text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900">
-      <Header selectedTab={selectedTab} setSelectedTab={setSelectedTab} user={user} />
+      <Header selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         {renderActiveTab()}
@@ -630,13 +678,8 @@ const Dashboard = () => {
         <span className="hidden sm:inline-block text-xs font-black uppercase tracking-widest">Challenges</span>
       </button>
 
-      <footer className="max-w-7xl mx-auto px-6 py-12 border-t border-blue-100 mt-12 flex flex-col md:flex-row justify-between items-center gap-6">
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">© 2024 BALANGKAS MISSION CONTROL</p>
-        <div className="flex gap-8">
-          <a href="#" className="text-xs font-bold text-slate-400 hover:text-blue-600 transition-colors uppercase tracking-widest">Privacy Directive</a>
-          <a href="#" className="text-xs font-bold text-slate-400 hover:text-blue-600 transition-colors uppercase tracking-widest">Tech Support</a>
-          <a href="#" className="text-xs font-bold text-slate-400 hover:text-blue-600 transition-colors uppercase tracking-widest">Code of Conduct</a>
-        </div>
+      <footer className="max-w-7xl mx-auto px-6 py-12 border-t border-blue-100 mt-12 flex items-center justify-center">
+        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">BALANGKAS 2026</p>
       </footer>
 
       <style>{`

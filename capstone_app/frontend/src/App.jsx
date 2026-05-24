@@ -8,6 +8,7 @@ import StudentClassPage from './pages/StudentDashboard/StudentClassPage';
 import PlayerShipDashboard from './pages/PlayerShipDashboard';
 import TreeDeliveryDrone from './pages/TreeDeliveryDrone';
 import NodeMapOverlay from './pages/NodeMapOverlay';
+import IntroductionPage from './pages/StudentDashboard/missions/Introduction/IntroductionPage';
 import RecursionPage from './pages/StudentDashboard/missions/Recursion/RecursionPage';
 import IterationPage from './pages/StudentDashboard/missions/Iteration/IterationPage';
 import LinkedListPage from './pages/StudentDashboard/missions/LinkedList/LinkedListPage';
@@ -41,7 +42,7 @@ function ProtectedRoute({ currentUser, currentRole, isCheckingAuth, allowedRoles
   }
 
   // Allow unauthenticated access to mission preview routes (pre-test and intro views)
-  const publicMissionPaths = ['/playershipdashboard/recursion', '/playershipdashboard/iteration', '/playershipdashboard/linked-list'];
+  const publicMissionPaths = ['/playershipdashboard/introduction', '/playershipdashboard/recursion', '/playershipdashboard/iteration', '/playershipdashboard/linked-list'];
   if (!currentUser && publicMissionPaths.includes(location.pathname)) {
     return <Outlet />;
   }
@@ -103,6 +104,7 @@ export default function App() {
           element={isCheckingAuth ? <LoadingScreen /> : <LoginPage />}
         />
         {/* Public mission previews: allow viewing pre-test and intro without signing in */}
+        <Route path="/playershipdashboard/introduction" element={<IntroductionPage />} />
         <Route path="/playershipdashboard/recursion" element={<RecursionPage />} />
         <Route path="/playershipdashboard/iteration" element={<IterationPage />} />
         <Route path="/playershipdashboard/linked-list" element={<LinkedListPage />} />

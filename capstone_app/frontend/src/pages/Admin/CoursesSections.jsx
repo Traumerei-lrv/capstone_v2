@@ -56,7 +56,7 @@ export default function CoursesSections() {
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Editor scaffold</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Editor</p>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <p className="font-semibold text-slate-900">Course form</p>

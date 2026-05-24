@@ -1,4 +1,4 @@
-import { Bell, Layout, User } from "lucide-react";
+import { Bell, User } from "lucide-react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 
@@ -15,7 +15,7 @@ function TabLink({ tab }) {
       to={tab.to}
       end={tab.end}
       className={({ isActive }) =>
-        `pb-1 text-sm uppercase tracking-wide transition-colors ${
+        `pb-1 text-sm font-semibold uppercase tracking-wider transition-colors ${
           isActive ? "text-white font-bold border-b-2 border-white" : "text-blue-100 font-medium hover:text-white"
         }`
       }
@@ -34,13 +34,7 @@ export default function AdminLayout() {
     <div className="min-h-screen bg-[#f9f9ff] text-slate-900">
       <header className="sticky top-0 z-50 border-b-2 border-blue-700 bg-[#5089c6]">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-          <div className="flex items-center gap-8">
-            <button type="button" onClick={() => navigate('/admin')} className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded bg-white">
-                <Layout className="h-5 w-5 text-[#5089c6]" />
-              </div>
-              <span className="text-2xl font-black italic tracking-tighter text-white">BALANGKAS</span>
-            </button>
+          <div className="flex items-center">
             <nav className="hidden items-center gap-6 md:flex">
               {tabs.map((tab) => (
                 <TabLink key={tab.label} tab={tab} />
@@ -49,10 +43,6 @@ export default function AdminLayout() {
           </div>
 
           <div className="flex items-center gap-4 text-white">
-            <div className="hidden text-right md:block">
-              <p className="text-xs font-semibold uppercase tracking-wider text-blue-100">Signed in as</p>
-              <p className="text-sm font-bold">{user?.profile?.full_name || "Administrator"}</p>
-            </div>
             <button className="relative rounded-full p-2 transition-colors hover:bg-blue-600" type="button" aria-label="Notifications">
               <Bell className="h-5 w-5" />
               <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full border-2 border-blue-700 bg-orange-500"></span>

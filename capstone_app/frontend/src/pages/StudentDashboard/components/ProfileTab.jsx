@@ -1,18 +1,16 @@
 import {
   Award,
-  BookOpen,
-  CalendarDays,
   CheckCircle,
   Coins,
   Edit3,
   Flame,
   LogOut,
   Mail,
-  MapPin,
   Shield,
   Trophy,
   User,
 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
 const Card = ({ children, className = '' }) => (
   <section className={`rounded-2xl border-2 border-blue-100 bg-white p-6 ${className}`}>
@@ -39,6 +37,8 @@ const InfoRow = ({ icon: Icon, label, value }) => (
     </div>
   </div>
 );
+
+const STUDENT_SCOREBOARD_STORAGE_KEY = 'balangkas.student.scoreboard';
 
 const SkillBar = ({ label, value }) => (
   <div>
@@ -73,14 +73,83 @@ function toTitleCase(value) {
 
 export default function ProfileTab({ onLogout, user }) {
   const role = user?.profile?.role || 'student';
+  const [scoreboard, setScoreboard] = useState({});
+  const [selectedTopicKey, setSelectedTopicKey] = useState('');
   const profile = {
     name: user?.profile?.full_name || 'Recruit',
     title: `${toTitleCase(role)} Account`,
     email: user?.email || 'No email',
-    cohort: role === 'instructor' ? 'Instructor Cohort' : role === 'admin' ? 'Admin Control Group' : 'Student Cohort',
-    base: role === 'instructor' ? 'Instructor Command' : role === 'admin' ? 'Admin Operations Hub' : 'Mission Class Command',
-    joined: 'Local Account',
   };
+
+  useEffect(() => {
+    const loadScoreboard = () => {
+      try {
+        const raw = window.localStorage.getItem(STUDENT_SCOREBOARD_STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : {};
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+          setScoreboard({});
+          return;
+        }
+        setScoreboard(parsed);
+      } catch (error) {
+        setScoreboard({});
+      }
+    };
+
+    const handleScoreboardUpdated = (event) => {
+      const detail = event?.detail;
+      if (!detail || typeof detail !== 'object' || Array.isArray(detail)) {
+        loadScoreboard();
+        return;
+      }
+      setScoreboard(detail);
+    };
+
+    loadScoreboard();
+    window.addEventListener('storage', loadScoreboard);
+    window.addEventListener('focus', loadScoreboard);
+    window.addEventListener('balangkas:scoreboard-updated', handleScoreboardUpdated);
+
+    return () => {
+      window.removeEventListener('storage', loadScoreboard);
+      window.removeEventListener('focus', loadScoreboard);
+      window.removeEventListener('balangkas:scoreboard-updated', handleScoreboardUpdated);
+    };
+  }, []);
+
+  const topicScores = useMemo(() => {
+    if (!scoreboard || typeof scoreboard !== 'object' || Array.isArray(scoreboard)) {
+      return [];
+    }
+
+    return Object.entries(scoreboard)
+      .filter(([, entry]) => entry && typeof entry === 'object')
+      .map(([topicKey, entry]) => ({
+        topicKey,
+        topicLabel: toTitleCase(topicKey),
+        pre: Number.isFinite(entry.preTestScore) ? entry.preTestScore : null,
+        post: Number.isFinite(entry.postTestScore) ? entry.postTestScore : null,
+        updatedAt: entry.updatedAt || null,
+      }))
+      .sort((a, b) => {
+        const aTime = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const bTime = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        return bTime - aTime;
+      });
+  }, [scoreboard]);
+
+  useEffect(() => {
+    if (!topicScores.length) {
+      setSelectedTopicKey('');
+      return;
+    }
+
+    if (!topicScores.some((topic) => topic.topicKey === selectedTopicKey)) {
+      setSelectedTopicKey(topicScores[0].topicKey);
+    }
+  }, [topicScores, selectedTopicKey]);
+
+  const selectedTopic = topicScores.find((topic) => topic.topicKey === selectedTopicKey) || topicScores[0] || null;
 
   return (
     <div className="space-y-8">
@@ -123,11 +192,9 @@ export default function ProfileTab({ onLogout, user }) {
           </div>
         </div>
 
-        <div className="grid gap-4 p-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 p-6 sm:grid-cols-2">
           <InfoRow icon={Mail} label="Signal Mail" value={profile.email} />
-          <InfoRow icon={Shield} label="Cohort" value={profile.cohort} />
-          <InfoRow icon={MapPin} label="Home Base" value={profile.base} />
-          <InfoRow icon={CalendarDays} label="Joined" value={profile.joined} />
+          <InfoRow icon={User} label="Role" value={toTitleCase(role)} />
         </div>
       </div>
 
@@ -146,7 +213,7 @@ export default function ProfileTab({ onLogout, user }) {
             <div className="mb-6 flex items-center justify-between gap-4">
               <div>
                 <h2 className="text-2xl font-black tracking-tight text-blue-900">Mission Progress</h2>
-                <p className="mt-1 text-sm font-medium text-slate-500">Current technical readiness across active learning paths.</p>
+                <p className="mt-1 text-sm font-medium text-slate-500">Progress across your active learning paths.</p>
               </div>
               <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-blue-600">
                 1,250 / 3,250 XP
@@ -156,24 +223,58 @@ export default function ProfileTab({ onLogout, user }) {
               <SkillBar label="Recursion Relay" value={82} />
               <SkillBar label="Iteration Forge" value={64} />
               <SkillBar label="Linked List Link-up" value={51} />
-              <SkillBar label="Assessment Accuracy" value={87} />
             </div>
           </Card>
 
           <Card>
             <div className="mb-6 flex items-center gap-3">
-              <BookOpen className="h-5 w-5 text-blue-600" />
-              <h2 className="text-xl font-black tracking-tight text-blue-900">Current Class</h2>
+              <Trophy className="h-5 w-5 text-blue-600" />
+              <h2 className="text-xl font-black tracking-tight text-blue-900">Assessment Scores</h2>
             </div>
-            <div className="rounded-2xl bg-blue-50 p-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-blue-500">Enrolled Fleet</p>
-              <h3 className="mt-2 text-xl font-black text-blue-900">Advanced Propulsion Systems</h3>
-              <p className="mt-2 text-xs font-bold uppercase tracking-wider text-slate-500">Instructor: Cmdr. Elias Vance</p>
-              <div className="mt-5 flex items-center justify-between border-t border-blue-100 pt-4">
-                <span className="text-xs font-black uppercase tracking-widest text-blue-600">24/30 Enrolled</span>
-                <CheckCircle className="h-5 w-5 text-emerald-500" />
+            {topicScores.length === 0 ? (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <p className="text-sm font-medium text-slate-600">No pre-test or post-test scores yet.</p>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {topicScores.map((topic) => {
+                    const active = topic.topicKey === selectedTopic?.topicKey;
+                    return (
+                      <button
+                        key={topic.topicKey}
+                        type="button"
+                        onClick={() => setSelectedTopicKey(topic.topicKey)}
+                        className={`rounded-full px-3 py-1.5 text-xs font-black uppercase tracking-wider transition ${
+                          active ? 'bg-blue-700 text-white' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                        }`}
+                      >
+                        {topic.topicLabel}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-blue-500">Selected topic</p>
+                  <p className="mt-1 text-lg font-black text-blue-900">{selectedTopic?.topicLabel}</p>
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    <div className="rounded-xl border border-blue-100 bg-white p-3">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-blue-500">Pre-test</p>
+                      <p className="mt-1 text-2xl font-black text-blue-900">
+                        {selectedTopic?.pre === null ? '--' : `${selectedTopic.pre}%`}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-emerald-100 bg-white p-3">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Post-test</p>
+                      <p className="mt-1 text-2xl font-black text-emerald-900">
+                        {selectedTopic?.post === null ? '--' : `${selectedTopic.post}%`}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </Card>
         </div>
       ) : null}

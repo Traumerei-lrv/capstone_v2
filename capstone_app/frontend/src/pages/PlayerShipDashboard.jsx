@@ -213,7 +213,7 @@ export default function PlayerShipDashboard() {
                 onMouseEnter={() => setHoveredHitbox({
                   id: hitbox.id,
                   title: hitbox.title,
-                  description: hitbox.description ?? "Description placeholder. Edit this text for your mission details.",
+                  description: hitbox.description ?? "No description available.",
                 })}
                 onMouseLeave={() => setHoveredHitbox((current) => (current?.id === hitbox.id ? null : current))}
                 className="min-h-[56px] min-w-[220px] rounded-md border border-cyan-200/70 bg-slate-900/25 px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.12em] text-cyan-100 shadow-[0_0_0_rgba(34,211,238,0)] backdrop-blur-[1px] transition hover:bg-slate-900/45 hover:shadow-[0_0_18px_rgba(34,211,238,0.55)]"
@@ -229,7 +229,7 @@ export default function PlayerShipDashboard() {
                 onMouseEnter={() => setHoveredHitbox({
                   id: hitbox.id,
                   title: hitbox.title,
-                  description: hitbox.description ?? "Description placeholder. Edit this text for your mission details.",
+                  description: hitbox.description ?? "No description available.",
                 })}
                 onMouseLeave={() => setHoveredHitbox((current) => (current?.id === hitbox.id ? null : current))}
                 className="inline-flex min-h-[56px] min-w-[220px] items-center justify-center rounded-md border border-cyan-200/70 bg-slate-900/25 px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.12em] text-cyan-100 shadow-[0_0_0_rgba(34,211,238,0)] backdrop-blur-[1px] transition hover:bg-slate-900/45 hover:shadow-[0_0_18px_rgba(34,211,238,0.55)]"

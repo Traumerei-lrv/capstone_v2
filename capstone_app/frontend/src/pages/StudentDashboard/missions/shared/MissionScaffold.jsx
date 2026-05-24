@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import useAuth from '../../../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { recordMissionAttempt, upsertMissionProgress } from '../../../../api/studentDashboard';
-import { Trophy, MessageCircleQuestion, Sparkles, CheckCircle, XCircle, Play, Pause, RotateCcw, SkipBack, SkipForward } from 'lucide-react';
+import { Trophy, MessageCircleQuestion, Sparkles, CheckCircle, XCircle } from 'lucide-react';
+import IntroductionDsaVisualization from './IntroductionDsaVisualization';
+import RecursionHanoiVisualization from './RecursionHanoiVisualization';
 
 const STAGES = [
   { key: 'pre-test', label: 'Pre-test' },
@@ -10,14 +12,69 @@ const STAGES = [
   { key: 'problem', label: 'Problem' },
   { key: 'post-test', label: 'Post-test' },
 ];
+const NEXT_MISSION_PATHS = {
+  introduction: '/playershipdashboard/recursion',
+  recursion: '/playershipdashboard',
+  iteration: '/playershipdashboard',
+};
 
-const TOWER_LABELS = ['A', 'B', 'C'];
+const STUDENT_SCOREBOARD_STORAGE_KEY = 'balangkas.student.scoreboard';
+const INTRO_CONCEPT_ITEMS = [
+  { id: 'ds-storage', text: 'A special format used to store and organize data.' },
+  { id: 'adt-behavior', text: 'A logical description of how data is viewed and what operations are allowed.' },
+  { id: 'adt-ops', text: 'Initializing, adding, accessing, and removing data.' },
+  { id: 'algo-steps', text: 'A step-by-step set of instructions used to solve a problem.' },
+];
+const INTRO_CONCEPT_ZONES = [
+  { key: 'data-structure', label: 'Data Structure' },
+  { key: 'abstract-data-type', label: 'Abstract Data Type' },
+  { key: 'adt-operation', label: 'ADT Operation' },
+  { key: 'algorithm', label: 'Algorithm' },
+];
+const INTRO_CONCEPT_MATCHES = {
+  'ds-storage': 'data-structure',
+  'adt-behavior': 'abstract-data-type',
+  'adt-ops': 'adt-operation',
+  'algo-steps': 'algorithm',
+};
+const INTRO_CONCEPT_SUCCESS_FEEDBACK = 'Correct. You classified the basic DSA concepts properly.';
+const INTRO_CONCEPT_REVIEW_FEEDBACK = 'Review the meaning of each concept. A data structure stores data, an ADT describes allowed operations, an operation performs an action, and an algorithm follows steps to solve a problem.';
+const RECURSION_ORDER_ITEMS = [
+  {
+    id: 'check-base',
+    text: 'Check if the base case has been reached.',
+    icon: 'Base Case',
+  },
+  {
+    id: 'stop-base',
+    text: 'If the base case is reached, stop the recursion.',
+    icon: 'Base Case',
+  },
+  {
+    id: 'change-state',
+    text: 'Change the state so the problem moves closer to the base case.',
+    icon: 'State',
+  },
+  {
+    id: 'recursive-call',
+    text: 'Call the function again recursively.',
+    icon: 'Call',
+  },
+];
+const RECURSION_ORDER_CORRECT = ['check-base', 'stop-base', 'change-state', 'recursive-call'];
+const RECURSION_ORDER_DEFAULT = ['change-state', 'recursive-call', 'check-base', 'stop-base'];
+const RECURSION_ORDER_SUCCESS_FEEDBACK = 'Correct. A recursive algorithm needs a base case, a change of state, and a recursive call.';
+const RECURSION_ORDER_WRONG_FEEDBACK = 'Not quite. Recursion must first check for a stopping condition before it continues calling itself.';
 
-function getRecursionPhaseLabel(phase) {
-  if (phase === 'return') return 'Return';
-  if (phase === 'base') return 'Base Case';
-  if (phase === 'move') return 'Move';
-  return 'Call';
+function getInitialIntroConceptPlacements() {
+  return INTRO_CONCEPT_ITEMS.reduce((accumulator, item) => {
+    accumulator[item.id] = null;
+    return accumulator;
+  }, {});
+}
+
+function getInitialRecursionOrder() {
+  return [...RECURSION_ORDER_DEFAULT];
 }
 
 function ChoiceList({ prompt, choices, selectedIndex, onSelect, accent, title, disabled = false }) {
@@ -70,131 +127,14 @@ function isUuid(value) {
   return typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
-const RECURSION_DEMO_STEPS = [
-  { move: 0, status: 'Recursive Case', phase: 'recursive', currentFn: 'solveHanoi(3, A, B, C)', explanation: 'We need to move 3 disks from Tower A to Tower C.', towers: { A: [3, 2, 1], B: [], C: [] }, stack: ['solveHanoi(3, A, B, C)'], activeDisk: null },
-  { move: 1, status: 'Base Case', phase: 'base', currentFn: 'solveHanoi(1, A, B, C)', explanation: 'To move 3 disks, we reduce the problem until only 1 disk remains. Move Disk 1 from Tower A to Tower C.', towers: { A: [3, 2], B: [], C: [1] }, stack: ['solveHanoi(3, A, B, C)', 'solveHanoi(2, A, C, B)', 'solveHanoi(1, A, B, C)'], activeDisk: 1 },
-  { move: 2, status: 'Returning', phase: 'returning', currentFn: 'solveHanoi(2, A, C, B)', explanation: 'Now that Disk 1 is out of the way, move Disk 2 to Tower B.', towers: { A: [3], B: [2], C: [1] }, stack: ['solveHanoi(3, A, B, C)', 'solveHanoi(2, A, C, B)'], activeDisk: 2 },
-  { move: 3, status: 'Base Case', phase: 'base', currentFn: 'solveHanoi(1, C, A, B)', explanation: 'Move Disk 1 onto Tower B to complete the smaller subproblem.', towers: { A: [3], B: [2, 1], C: [] }, stack: ['solveHanoi(3, A, B, C)', 'solveHanoi(2, A, C, B)', 'solveHanoi(1, C, A, B)'], activeDisk: 1 },
-  { move: 4, status: 'Returning', phase: 'returning', currentFn: 'solveHanoi(3, A, B, C)', explanation: 'The smaller disks are out of the way, so the largest disk can now move to Tower C.', towers: { A: [], B: [2, 1], C: [3] }, stack: ['solveHanoi(3, A, B, C)'], activeDisk: 3 },
-  { move: 5, status: 'Base Case', phase: 'base', currentFn: 'solveHanoi(1, B, C, A)', explanation: 'Now move the 2 smaller disks from Tower B to Tower C. Base case: move Disk 1 from Tower B to Tower A.', towers: { A: [1], B: [2], C: [3] }, stack: ['solveHanoi(3, A, B, C)', 'solveHanoi(2, B, A, C)', 'solveHanoi(1, B, C, A)'], activeDisk: 1 },
-  { move: 6, status: 'Returning', phase: 'returning', currentFn: 'solveHanoi(2, B, A, C)', explanation: 'Move Disk 2 to Tower C.', towers: { A: [1], B: [], C: [3, 2] }, stack: ['solveHanoi(3, A, B, C)', 'solveHanoi(2, B, A, C)'], activeDisk: 2 },
-  { move: 7, status: 'Completed', phase: 'completed', currentFn: 'solveHanoi(1, A, B, C)', explanation: 'Move Disk 1 to Tower C. The full problem is now solved. Solved in 7 moves.', towers: { A: [], B: [], C: [3, 2, 1] }, stack: [], activeDisk: 1 },
-];
-
-function RecursionVisualizationPanel({ stepIndex, setStepIndex, isPlaying, setIsPlaying }) {
-  const step = RECURSION_DEMO_STEPS[stepIndex] || RECURSION_DEMO_STEPS[0];
-  const progress = Math.round((Math.min(step.move, 7) / 7) * 100);
-  const badgeTone =
-    step.phase === 'base' ? 'bg-emerald-100 text-emerald-700 border-emerald-300' :
-    step.phase === 'returning' ? 'bg-amber-100 text-amber-700 border-amber-300' :
-    step.phase === 'completed' ? 'bg-emerald-100 text-emerald-700 border-emerald-300' :
-    'bg-blue-100 text-blue-700 border-blue-300';
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-start justify-between">
-        <div>
-          <h3 className="text-lg font-black text-blue-900">Visualization</h3>
-          <p className="text-xs text-slate-500">See how recursion works step by step.</p>
-        </div>
-        <span className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-blue-700">Auto-Play Flow</span>
-      </div>
-
-      <div className="rounded-2xl border border-blue-200 bg-white p-3 shadow-sm ring-2 ring-blue-200/60">
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Current Function</p>
-        <p className="mt-1 font-mono text-sm font-bold text-blue-900">solveHanoi(n, source, helper, target)</p>
-        <p className="font-mono text-xs text-blue-700">{step.currentFn}</p>
-        <p className="mt-2 text-xs text-slate-600">This call is the active recursion frame and may split into smaller subproblems.</p>
-      </div>
-
-      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Step Explanation</p>
-        <p className="mt-1 text-sm text-slate-700">{step.explanation}</p>
-      </div>
-
-      <div className="rounded-2xl border border-slate-200 bg-white p-3">
-        <div className="mb-3 flex items-center justify-between">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Tower State</p>
-          <span className={`rounded-full border px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${badgeTone}`}>{step.status}</span>
-        </div>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          {TOWER_LABELS.map((tower) => (
-            <div
-              key={tower}
-              className={`rounded-[1.2rem] border p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_24px_rgba(90,128,190,0.10)] ${
-                (step.towers[tower] || []).length > 0 ? 'border-blue-200 bg-[linear-gradient(180deg,#fbfdff_0%,#eef4fb_100%)]' : 'border-slate-200 bg-[linear-gradient(180deg,#fcfdff_0%,#f2f5fb_100%)]'
-              }`}
-            >
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Tower {tower}</p>
-              <div className="relative mx-auto mt-2 h-[240px] w-full max-w-[180px]">
-                <div className="absolute bottom-[26px] left-1/2 h-[152px] w-[10px] -translate-x-1/2 rounded-full border border-[#9cb8df] bg-[linear-gradient(180deg,#f8fbff_0%,#dce8f7_46%,#bfd3f1_100%)] shadow-[0_0_0_2px_rgba(255,255,255,0.55),0_8px_18px_rgba(80,126,198,0.18)]" />
-                <div className="absolute bottom-[18px] left-1/2 h-[10px] w-[34px] -translate-x-1/2 rounded-full border border-[#9cb8df] bg-[linear-gradient(180deg,#f4f8ff_0%,#d8e5f8_100%)]" />
-                <div className="absolute bottom-0 left-1/2 h-[38px] w-[122px] -translate-x-1/2 rounded-[14px] border border-[#b9cbe7] bg-[linear-gradient(180deg,#f8fbff_0%,#e7eef9_55%,#dde7f4_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_10px_18px_rgba(104,136,186,0.12)]" />
-                <div className="absolute bottom-[11px] left-1/2 h-[8px] w-[44px] -translate-x-1/2 rounded-full border border-[#5d8ee6] bg-[linear-gradient(180deg,#82b3ff_0%,#4e84e8_100%)] shadow-[0_0_0_2px_rgba(255,255,255,0.45)]" />
-                <div className="absolute bottom-[14px] left-[10px] h-[4px] w-[10px] rounded-full bg-[#d7d75f]" />
-                <div className="absolute bottom-[14px] right-[18px] h-[6px] w-[6px] rounded-full bg-[#f5d84f]" />
-                <div className="absolute bottom-[14px] right-[10px] h-[6px] w-[6px] rounded-full bg-[#f5d84f]" />
-                <div className="absolute bottom-[26px] left-0 right-0 z-20 flex flex-col-reverse items-center justify-start">
-                  {(step.towers[tower] || []).map((disk, index) => {
-                    const diskWidth = disk === 1 ? 70 : disk === 2 ? 110 : 150;
-                    return (
-                      <div
-                        key={`${tower}-${disk}-${index}`}
-                        title={`Disk ${disk}`}
-                        className={`mt-[-2px] h-[24px] rounded-[14px] border-2 border-[#173f9e] bg-gradient-to-b from-[#6fb2ff] via-[#3d7ef0] to-[#1d55d8] shadow-[0_3px_0_rgba(18,63,143,0.22)] transition-all duration-500 ${
-                          step.activeDisk === disk ? 'ring-2 ring-amber-300 shadow-[0_0_14px_rgba(250,204,21,0.55)]' : ''
-                        }`}
-                        style={{ width: `${diskWidth}px` }}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-slate-200 bg-white p-3">
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Call Stack</p>
-        <div className="mt-2 space-y-2">
-          {(step.stack.length ? step.stack : ['Stack cleared: recursion complete.']).map((frame, index) => {
-            const active = index === step.stack.length - 1;
-            return (
-              <div key={`${frame}-${index}`} className={`rounded-lg border px-3 py-2 text-xs font-mono transition-all ${active ? 'border-blue-300 bg-blue-50 text-blue-900 shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
-                {frame}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-slate-200 bg-white p-3">
-        <div className="mb-2 flex items-center justify-between text-xs">
-          <span className="font-bold uppercase tracking-wider text-slate-500">Progress</span>
-          <span className="font-black text-blue-800">Step {Math.min(step.move, 7)} of 7</span>
-        </div>
-        <div className="h-2 rounded-full bg-slate-200">
-          <div className="h-2 rounded-full bg-blue-600 transition-all duration-500" style={{ width: `${progress}%` }} />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-5 gap-2">
-        <button type="button" onClick={() => { setIsPlaying(false); setStepIndex((v) => Math.max(0, v - 1)); }} className="rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs font-bold text-slate-700"><SkipBack className="mx-auto h-4 w-4" />Previous</button>
-        <button type="button" onClick={() => { setIsPlaying(false); setStepIndex((v) => Math.min(7, v + 1)); }} className="rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs font-bold text-slate-700"><SkipForward className="mx-auto h-4 w-4" />Next</button>
-        <button type="button" onClick={() => setIsPlaying(true)} className="rounded-lg bg-blue-600 px-2 py-2 text-xs font-bold text-white"><Play className="mx-auto h-4 w-4" />Play</button>
-        <button type="button" onClick={() => setIsPlaying(false)} className="rounded-lg bg-amber-500 px-2 py-2 text-xs font-bold text-white"><Pause className="mx-auto h-4 w-4" />Pause</button>
-        <button type="button" onClick={() => { setIsPlaying(false); setStepIndex(0); }} className="rounded-lg bg-slate-900 px-2 py-2 text-xs font-bold text-white"><RotateCcw className="mx-auto h-4 w-4" />Reset</button>
-      </div>
-    </div>
-  );
+function RecursionVisualizationPanel() {
+  return <RecursionHanoiVisualization />;
 }
 
 export default function MissionScaffold({ mission }) {
   const navigate = useNavigate();
   const [stageIndex, setStageIndex] = useState(0);
-  const [recursionStepIndex, setRecursionStepIndex] = useState(0);
-  const [isRecursionPlaying, setIsRecursionPlaying] = useState(false);
+  const [introSubtopicIndex, setIntroSubtopicIndex] = useState(0);
   const preQuestions = mission.preTest.questions || [
     {
       prompt: mission.preTest.prompt,
@@ -204,7 +144,17 @@ export default function MissionScaffold({ mission }) {
   ];
   const [preAnswers, setPreAnswers] = useState(() => preQuestions.map(() => null));
   const [preQuestionIndex, setPreQuestionIndex] = useState(0);
-  const [postAnswer, setPostAnswer] = useState(null);
+  const postQuestions = mission.postTest.questions || [
+    {
+      prompt: mission.postTest.prompt,
+      choices: mission.postTest.choices,
+      correctIndex: mission.postTest.correctIndex,
+    },
+  ];
+  const [postAnswers, setPostAnswers] = useState(() => postQuestions.map(() => null));
+  const [postQuestionIndex, setPostQuestionIndex] = useState(0);
+  const [postTestSubmitted, setPostTestSubmitted] = useState(false);
+  const [postTestResult, setPostTestResult] = useState(null);
   const [statusMessage, setStatusMessage] = useState('');
   const [saving, setSaving] = useState(false);
   const [showPreTestPrompt, setShowPreTestPrompt] = useState(true);
@@ -214,6 +164,13 @@ export default function MissionScaffold({ mission }) {
   const [detailedResults, setDetailedResults] = useState(null);
   const [problemSubmitted, setProblemSubmitted] = useState(false);
   const [problemResult, setProblemResult] = useState(null);
+  const [showProblemSuccessModal, setShowProblemSuccessModal] = useState(false);
+  const [introConceptPlacements, setIntroConceptPlacements] = useState(() => getInitialIntroConceptPlacements());
+  const [introConceptFeedback, setIntroConceptFeedback] = useState('');
+  const [introConceptSolved, setIntroConceptSolved] = useState(false);
+  const [recursionOrder, setRecursionOrder] = useState(() => getInitialRecursionOrder());
+  const [recursionOrderFeedback, setRecursionOrderFeedback] = useState('');
+  const [recursionOrderSolved, setRecursionOrderSolved] = useState(false);
 
   const progressPercent = useMemo(() => {
     if (STAGES.length <= 1) {
@@ -224,16 +181,44 @@ export default function MissionScaffold({ mission }) {
   }, [stageIndex]);
 
   const currentStage = STAGES[stageIndex];
+  const hasIntroSubtopics = Array.isArray(mission.introSubtopics) && mission.introSubtopics.length > 0;
+  const currentIntroSubtopic = hasIntroSubtopics ? mission.introSubtopics[introSubtopicIndex] : null;
   const isRecursionMission = mission.key === 'recursion';
-  const recursionVisualization = mission.recursionVisualization;
-  const recursionSteps = mission.key === 'recursion' ? RECURSION_DEMO_STEPS : (recursionVisualization?.steps || []);
-  const recursionFrameDuration = recursionVisualization?.frameDurationMs || 1400;
+  const isIntroductionMission = mission.key === 'introduction';
   const allPreTestAnswered = preAnswers.every((answer) => answer !== null);
   const preCorrectCount = preQuestions.reduce((count, question, index) => count + (preAnswers[index] === question.correctIndex ? 1 : 0), 0);
   const preScore = preTestSubmitted ? Math.round((preCorrectCount / preQuestions.length) * 100) : 0;
   const problemScore = problemSubmitted ? problemResult?.score || 0 : 0;
-  const postScore = postAnswer === mission.postTest.correctIndex ? 100 : postAnswer === null ? 0 : 50;
+  const postCorrectCount = postQuestions.reduce((count, question, index) => count + (postAnswers[index] === question.correctIndex ? 1 : 0), 0);
+  const postScore = postTestSubmitted ? Math.round((postCorrectCount / postQuestions.length) * 100) : 0;
   const visualizationScore = 100;
+  const introUnassignedItems = INTRO_CONCEPT_ITEMS.filter((item) => introConceptPlacements[item.id] === null);
+  const introZoneAssignments = INTRO_CONCEPT_ZONES.reduce((accumulator, zone) => {
+    const assignedItem = INTRO_CONCEPT_ITEMS.find((item) => introConceptPlacements[item.id] === zone.key) || null;
+    accumulator[zone.key] = assignedItem;
+    return accumulator;
+  }, {});
+  const recursionOrderCards = recursionOrder.map((id) => RECURSION_ORDER_ITEMS.find((item) => item.id === id)).filter(Boolean);
+
+  function persistScoreboardUpdate(nextPartial) {
+    try {
+      const raw = window.localStorage.getItem(STUDENT_SCOREBOARD_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : {};
+      const missionEntry = parsed[mission.key] || {};
+      const updated = {
+        ...parsed,
+        [mission.key]: {
+          ...missionEntry,
+          ...nextPartial,
+          updatedAt: new Date().toISOString(),
+        },
+      };
+      window.localStorage.setItem(STUDENT_SCOREBOARD_STORAGE_KEY, JSON.stringify(updated));
+      window.dispatchEvent(new CustomEvent('balangkas:scoreboard-updated', { detail: updated }));
+    } catch (error) {
+      // Keep mission flow resilient even if localStorage is unavailable.
+    }
+  }
 
   async function handleCompleteMission() {
     setSaving(true);
@@ -246,7 +231,7 @@ export default function MissionScaffold({ mission }) {
         await upsertMissionProgress({ missionId: mission.missionId, status: 'completed' });
         setStatusMessage(`Saved sample score: ${score}%`);
       } else {
-        setStatusMessage(`Scaffold score: ${score}%. Add a real mission UUID in the DB before enabling saves.`);
+        setStatusMessage(`Lesson score: ${score}%. Add a real mission UUID in the DB before enabling saves.`);
       }
     } catch (error) {
       setStatusMessage(error.message || 'Failed to save sample mission result.');
@@ -265,7 +250,24 @@ export default function MissionScaffold({ mission }) {
     setShowScoreModal(false);
     setProblemSubmitted(false);
     setProblemResult(null);
+    setShowProblemSuccessModal(false);
+    setPostAnswers(postQuestions.map(() => null));
+    setPostQuestionIndex(0);
+    setPostTestSubmitted(false);
+    setPostTestResult(null);
+    setIntroConceptPlacements(getInitialIntroConceptPlacements());
+    setIntroConceptFeedback('');
+    setIntroConceptSolved(false);
+    setRecursionOrder(getInitialRecursionOrder());
+    setRecursionOrderFeedback('');
+    setRecursionOrderSolved(false);
     setStatusMessage('');
+  }
+
+  async function handleCompleteMissionAndContinue() {
+    await handleCompleteMission();
+    const nextPath = NEXT_MISSION_PATHS[mission.key] || '/playershipdashboard';
+    navigate(nextPath);
   }
 
   function submitPreTest() {
@@ -287,6 +289,7 @@ export default function MissionScaffold({ mission }) {
     }));
     setDetailedResults(results);
     setShowScoreModal(true);
+    persistScoreboardUpdate({ preTestScore: score });
   }
 
   function continueToIntroduction() {
@@ -296,40 +299,125 @@ export default function MissionScaffold({ mission }) {
   }
 
   function submitProblem() {
+    if (problemSubmitted) {
+      setShowProblemSuccessModal(true);
+      return;
+    }
     const score = 100;
     const solved = true;
     setProblemSubmitted(true);
     setProblemResult({ score, solved });
+    setShowProblemSuccessModal(true);
     setStatusMessage('Great work. You can continue to the post-test.');
   }
 
-  const currentPreQuestion = preQuestions[preQuestionIndex];
-  const isLastPreQuestion = preQuestionIndex === preQuestions.length - 1;
-  const canGoNextPreQuestion = preAnswers[preQuestionIndex] !== null;
+  function resetIntroConceptActivity() {
+    setIntroConceptPlacements(getInitialIntroConceptPlacements());
+    setIntroConceptFeedback('');
+    setIntroConceptSolved(false);
+    setProblemSubmitted(false);
+    setProblemResult(null);
+    setShowProblemSuccessModal(false);
+    setStatusMessage('');
+  }
 
-  useEffect(() => {
-    const supportsRecursionPlayback = currentStage?.key === 'intro' || currentStage?.key === 'problem';
-    if (!supportsRecursionPlayback || !isRecursionMission || recursionSteps.length <= 1 || !isRecursionPlaying) {
-      return undefined;
+  function resetRecursionOrderActivity() {
+    setRecursionOrder(getInitialRecursionOrder());
+    setRecursionOrderFeedback('');
+    setRecursionOrderSolved(false);
+    setProblemSubmitted(false);
+    setProblemResult(null);
+    setShowProblemSuccessModal(false);
+    setStatusMessage('');
+  }
+
+  function reorderRecursionSteps(draggedId, targetIndex) {
+    if (!draggedId) {
+      return;
     }
 
-    const intervalId = window.setInterval(() => {
-      setRecursionStepIndex((current) => {
-        if (current >= recursionSteps.length - 1) {
-          setIsRecursionPlaying(false);
-          return current;
-        }
-        return current + 1;
-      });
-    }, recursionFrameDuration);
+    setRecursionOrder((currentOrder) => {
+      const fromIndex = currentOrder.indexOf(draggedId);
+      if (fromIndex === -1 || fromIndex === targetIndex) {
+        return currentOrder;
+      }
 
-    return () => window.clearInterval(intervalId);
-  }, [currentStage?.key, isRecursionMission, recursionFrameDuration, recursionSteps.length, isRecursionPlaying]);
+      const nextOrder = [...currentOrder];
+      nextOrder.splice(fromIndex, 1);
+      nextOrder.splice(targetIndex, 0, draggedId);
+      return nextOrder;
+    });
+
+    setRecursionOrderFeedback('');
+    setRecursionOrderSolved(false);
+    setProblemSubmitted(false);
+    setProblemResult(null);
+  }
+
+  function checkRecursionOrderAnswers() {
+    const isCorrect = RECURSION_ORDER_CORRECT.every((stepId, index) => recursionOrder[index] === stepId);
+    if (isCorrect) {
+      setRecursionOrderSolved(true);
+      setRecursionOrderFeedback(RECURSION_ORDER_SUCCESS_FEEDBACK);
+      submitProblem();
+      return;
+    }
+
+    setRecursionOrderSolved(false);
+    setRecursionOrderFeedback(RECURSION_ORDER_WRONG_FEEDBACK);
+  }
+
+  function moveIntroConceptItem(itemId, targetZoneKey) {
+    setIntroConceptPlacements((currentPlacements) => {
+      const sourceZoneKey = currentPlacements[itemId];
+      if (sourceZoneKey === targetZoneKey) {
+        return currentPlacements;
+      }
+
+      const nextPlacements = { ...currentPlacements, [itemId]: targetZoneKey };
+      if (targetZoneKey !== null) {
+        const occupyingItemId = Object.keys(currentPlacements).find(
+          (candidateId) => candidateId !== itemId && currentPlacements[candidateId] === targetZoneKey
+        );
+        if (occupyingItemId) {
+          nextPlacements[occupyingItemId] = sourceZoneKey ?? null;
+        }
+      }
+      return nextPlacements;
+    });
+
+    setIntroConceptFeedback('');
+    setIntroConceptSolved(false);
+    setProblemSubmitted(false);
+    setProblemResult(null);
+  }
+
+  function checkIntroConceptAnswers() {
+    const allCorrect = INTRO_CONCEPT_ITEMS.every(
+      (item) => introConceptPlacements[item.id] === INTRO_CONCEPT_MATCHES[item.id]
+    );
+
+    if (allCorrect) {
+      setIntroConceptSolved(true);
+      setIntroConceptFeedback('');
+      submitProblem();
+      return;
+    }
+
+    setIntroConceptSolved(false);
+    setIntroConceptFeedback(INTRO_CONCEPT_REVIEW_FEEDBACK);
+  }
+
+  const currentPreQuestion = preQuestions[preQuestionIndex];
+  const currentPostQuestion = postQuestions[postQuestionIndex];
+  const isLastPreQuestion = preQuestionIndex === preQuestions.length - 1;
+  const canGoNextPreQuestion = preAnswers[preQuestionIndex] !== null;
+  const isLastPostQuestion = postQuestionIndex === postQuestions.length - 1;
+  const canGoNextPostQuestion = postAnswers[postQuestionIndex] !== null;
 
   useEffect(() => {
-    if (currentStage?.key !== 'intro' && currentStage?.key !== 'problem') {
-      setRecursionStepIndex(0);
-      setIsRecursionPlaying(false);
+    if (currentStage?.key !== 'intro') {
+      setIntroSubtopicIndex(0);
     }
   }, [currentStage?.key]);
 
@@ -341,6 +429,23 @@ export default function MissionScaffold({ mission }) {
   function continueToPostTest() {
     setStageIndex(3);
     setStatusMessage('Post-test unlocked.');
+  }
+
+  useEffect(() => {
+    if (currentStage?.key !== 'post-test' || !postTestSubmitted) {
+      return;
+    }
+
+    persistScoreboardUpdate({ postTestScore: postScore });
+  }, [currentStage?.key, postScore, postTestSubmitted]);
+
+  function submitPostTest() {
+    const correctCount = postQuestions.reduce((count, question, index) => count + (postAnswers[index] === question.correctIndex ? 1 : 0), 0);
+    const total = postQuestions.length;
+    const score = Math.round((correctCount / total) * 100);
+    setPostTestSubmitted(true);
+    setPostTestResult({ correctCount, total, score });
+    setStatusMessage(`Post-test complete. You scored ${score}%.`);
   }
 
   function handleFooterBack() {
@@ -370,6 +475,45 @@ export default function MissionScaffold({ mission }) {
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f7f4ff_0%,#e7f3fb_100%)] px-3 py-3 text-slate-800 sm:px-4 sm:py-4">
       <div className="mx-auto flex min-h-[calc(100vh-1.5rem)] max-w-[1400px] flex-col gap-3">
+        {showProblemSuccessModal ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-6 backdrop-blur-sm">
+            <div className="w-full max-w-xl rounded-[2rem] bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.22)] sm:p-8">
+              <div className="flex items-center justify-center">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg">
+                  <CheckCircle className="h-10 w-10" />
+                </div>
+              </div>
+              <div className="mt-5 text-center">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-600">Success</p>
+                <h2 className="mt-2 text-3xl font-semibold text-slate-900">Problem Solved</h2>
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  Excellent work. You completed this checkpoint successfully.
+                </p>
+              </div>
+              <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowProblemSuccessModal(false)}
+                  className="rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Stay Here
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowProblemSuccessModal(false);
+                    continueToPostTest();
+                  }}
+                  className="rounded-full px-5 py-3 text-sm font-semibold text-white transition hover:brightness-105"
+                  style={{ backgroundColor: mission.accent }}
+                >
+                  Continue to Post-test
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         {showPreTestPrompt ? (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-6 backdrop-blur-sm">
             <div className="w-full max-w-2xl rounded-[2rem] bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.22)] sm:p-8">
@@ -384,7 +528,7 @@ export default function MissionScaffold({ mission }) {
                   <MessageCircleQuestion className="h-7 w-7" />
                 </div>
                 <div className="relative flex-1 rounded-[1.6rem] rounded-tl-md border border-slate-200 bg-slate-50 px-5 py-4 shadow-sm">
-                  <p className="text-sm font-semibold uppercase tracking-[0.26em] text-slate-400">Mission Guide</p>
+                  <p className="text-sm font-semibold uppercase tracking-[0.26em] text-slate-400">Instructions</p>
                   <p className="mt-2 text-base leading-7 text-slate-700">
                     Before we begin with this topic, answer this pre-test so we can assess your prior knowledge.
                   </p>
@@ -592,169 +736,342 @@ export default function MissionScaffold({ mission }) {
           ) : null}
 
           {currentStage?.key === 'intro' ? (
-            <div className="grid gap-3 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+            <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
               <MissionShellCard title="Introduction" accent={mission.accent} eyebrow="Theory">
-                {isRecursionMission ? (
-                  <div className="space-y-5 text-slate-800">
-                    <div>
-                      <h3 className="text-2xl font-black text-blue-900">Recursion</h3>
-                      <p className="mt-1 text-sm leading-7">A function calls itself to solve a smaller version of the same problem.</p>
-                    </div>
-
-                    <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-500">How It Works</p>
-                      <ol className="mt-3 space-y-2 text-sm">
-                        <li>1. Start with a problem.</li>
-                        <li>2. Break it into a smaller version.</li>
-                        <li>3. Repeat until it becomes simple enough to solve.</li>
-                      </ol>
-                    </section>
-
-                    <section className="rounded-2xl border border-slate-200 bg-white p-4">
-                      <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-500">Recursion Needs</p>
-                      <div className="mt-3 grid gap-3">
-                        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                          <p className="text-sm font-bold text-blue-900">Base Case</p>
-                          <p className="text-xs text-slate-600">The stopping point.</p>
+                <>
+                  <p className="text-base leading-7 text-slate-700">{mission.introBlurb}</p>
+                  {hasIntroSubtopics ? (
+                    <div className="mt-5 space-y-4">
+                      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                          <h4 className="text-base font-black text-slate-900">{currentIntroSubtopic.title}</h4>
+                          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-600">
+                            {introSubtopicIndex + 1} / {mission.introSubtopics.length}
+                          </span>
                         </div>
-                        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                          <p className="text-sm font-bold text-blue-900">Change of State</p>
-                          <p className="text-xs text-slate-600">The problem becomes smaller.</p>
-                        </div>
-                        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                          <p className="text-sm font-bold text-blue-900">Recursive Call</p>
-                          <p className="text-xs text-slate-600">The function calls itself again.</p>
-                        </div>
-                      </div>
-                    </section>
 
-                    <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-500">Tower of Hanoi</p>
-                      <p className="mt-2 text-sm">To move many disks, first move fewer disks.</p>
-                      <p className="mt-2 text-sm">That is why Tower of Hanoi is a good recursion example.</p>
-                    </section>
-
-                    <section className="rounded-2xl border border-blue-200 bg-blue-50/60 p-4">
-                      <p className="text-xs font-black uppercase tracking-[0.22em] text-blue-700">Current Demo</p>
-                      <div className="mt-3 grid gap-2 text-sm">
-                        <p><span className="font-semibold text-slate-600">Disks:</span> 3</p>
-                        <p><span className="font-semibold text-slate-600">Minimum Moves:</span> 7</p>
-                      </div>
-                      <p className="mt-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Formula</p>
-                      <p className="mt-1 text-base font-black text-blue-900">2<sup>n</sup> - 1</p>
-                    </section>
-                  </div>
-                ) : (
-                  <>
-                    <p className="text-base leading-7 text-slate-700">{mission.introBlurb}</p>
-                    {Array.isArray(mission.introMockData) && mission.introMockData.length > 0 ? (
-                      <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                        {mission.introMockData.map((item) => (
-                          <div key={item.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">{item.label}</p>
-                            <p className="mt-2 text-base font-semibold text-slate-900">{item.value}</p>
+                        {Array.isArray(currentIntroSubtopic.terms) && currentIntroSubtopic.terms.length > 0 ? (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {currentIntroSubtopic.terms.map((term) => (
+                              <span key={`${currentIntroSubtopic.title}-${term}`} className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                                {term}
+                              </span>
+                            ))}
                           </div>
-                        ))}
+                        ) : null}
+
+                        {currentIntroSubtopic.explanation ? (
+                          <p className="mt-3 text-sm leading-6 text-slate-700">{currentIntroSubtopic.explanation}</p>
+                        ) : null}
+
+                        {currentIntroSubtopic.simpleExplanation ? (
+                          <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+                            <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-700">Simple explanation</p>
+                            <p className="mt-2 text-sm text-emerald-900">{currentIntroSubtopic.simpleExplanation}</p>
+                          </div>
+                        ) : null}
+
+                        {currentIntroSubtopic.guideText ? (
+                          <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-3">
+                            <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-700">Guide</p>
+                            <p className="mt-2 text-sm text-blue-900">{currentIntroSubtopic.guideText}</p>
+                          </div>
+                        ) : null}
+                      </section>
+
+                      <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <button
+                          type="button"
+                          onClick={() => setIntroSubtopicIndex((value) => Math.max(0, value - 1))}
+                          disabled={introSubtopicIndex === 0}
+                          className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          Previous
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (introSubtopicIndex === mission.introSubtopics.length - 1) {
+                              continueToProblem();
+                              return;
+                            }
+                            setIntroSubtopicIndex((value) => Math.min(mission.introSubtopics.length - 1, value + 1));
+                          }}
+                          className="rounded-full px-5 py-2 text-sm font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+                          style={{ backgroundColor: mission.accent }}
+                        >
+                          {introSubtopicIndex === mission.introSubtopics.length - 1 ? 'Go to Problem' : 'Next'}
+                        </button>
                       </div>
-                    ) : null}
-                    <div className="mt-5 grid gap-3 rounded-[1.1rem] bg-slate-50 p-4 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-                      {mission.introPoints.map((point) => (
-                        <div key={point} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm">{point}</div>
+                    </div>
+                  ) : null}
+                  {Array.isArray(mission.introMockData) && mission.introMockData.length > 0 ? (
+                    <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                      {mission.introMockData.map((item) => (
+                        <div key={item.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">{item.label}</p>
+                          <p className="mt-2 text-base font-semibold text-slate-900">{item.value}</p>
+                        </div>
                       ))}
                     </div>
-                  </>
-                )}
+                  ) : null}
+                </>
               </MissionShellCard>
 
-              <div className="flex flex-col gap-3">
+              <div>
                 <MissionShellCard title="Visualization" accent={mission.accent} eyebrow="How it works">
                   {isRecursionMission ? (
-                    <RecursionVisualizationPanel
-                      stepIndex={recursionStepIndex}
-                      setStepIndex={setRecursionStepIndex}
-                      isPlaying={isRecursionPlaying}
-                      setIsPlaying={setIsRecursionPlaying}
-                    />
+                    <RecursionVisualizationPanel />
+                  ) : isIntroductionMission ? (
+                    <IntroductionDsaVisualization subtopicIndex={introSubtopicIndex} />
                   ) : (
                     <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm">
                       Topic visualization will appear here.
                     </div>
                   )}
                 </MissionShellCard>
-
-                <MissionShellCard title="Key Takeaways" accent={mission.accent} eyebrow="Summary">
-                  <p className="text-sm leading-6 text-slate-600">
-                    Focus on understanding the topic flow from the introduction and how each step appears in the visualization.
-                  </p>
-                  <div className="mt-4 grid gap-3">
-                    {mission.introPoints.map((point) => (
-                      <div key={`takeaway-${point}`} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm">
-                        {point}
-                      </div>
-                    ))}
-                  </div>
-                </MissionShellCard>
               </div>
-              <div className="lg:col-span-2 mt-4 flex justify-center">
-                <button
-                  type="button"
-                  onClick={continueToProblem}
-                  className="rounded-full px-6 py-3 text-sm font-semibold text-slate-900"
-                  style={{ backgroundImage: 'linear-gradient(90deg,#fbbf24,#f97316)' }}
-                >
-                  Done — Go to Problem
-                </button>
-              </div>
+              {!hasIntroSubtopics ? (
+                <div className="lg:col-span-2 mt-4 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={continueToProblem}
+                    className="rounded-full px-6 py-3 text-sm font-semibold text-slate-900"
+                    style={{ backgroundImage: 'linear-gradient(90deg,#fbbf24,#f97316)' }}
+                  >
+                    Done — Go to Problem
+                  </button>
+                </div>
+              ) : null}
             </div>
           ) : null}
 
           {currentStage?.key === 'problem' ? (
-            <div className="grid gap-3 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
-              <MissionShellCard title={mission.problem?.title || 'Problem'} accent={mission.accent} eyebrow="Challenge">
-                <p className="text-base leading-7 text-slate-700">{mission.problem?.prompt}</p>
-                <div className="mt-5 rounded-[1.2rem] border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Hint</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{mission.problem?.hint}</p>
-                </div>
-                <div className="mt-4 grid gap-3 rounded-[1.1rem] bg-slate-50 p-4">
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm">
-                    Input: small topic-specific example will be provided by the instructor.
-                  </div>
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm">
-                    Goal: finish the starter code so it solves the challenge.
-                  </div>
-                </div>
-                {problemSubmitted ? (
-                  <div className="mt-4 rounded-[1.2rem] border border-slate-200 bg-white px-4 py-4 shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-[0.26em] text-slate-400">Problem result</p>
-                    <p className="mt-1 text-lg font-semibold text-slate-900">{problemResult?.score || 0}%</p>
-                    <p className="text-sm text-slate-600">{problemResult?.solved ? 'Correct enough to continue.' : mission.problem?.solutionNote}</p>
-                  </div>
-                ) : null}
-              </MissionShellCard>
-
-              <div className="flex flex-col gap-3">
-                <MissionShellCard title="Visualization" accent={mission.accent} eyebrow="How it works">
-                  {isRecursionMission ? (
-                    <RecursionVisualizationPanel
-                      stepIndex={recursionStepIndex}
-                      setStepIndex={setRecursionStepIndex}
-                      isPlaying={isRecursionPlaying}
-                      setIsPlaying={setIsRecursionPlaying}
-                    />
-                  ) : (
-                    <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm">
-                      Topic visualization will appear here.
+            isIntroductionMission ? (
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+                <MissionShellCard title="Classify the Concept" accent={mission.accent} eyebrow="CONCEPT CHALLENGE">
+                  <div className="space-y-4 text-sm leading-7 text-slate-700">
+                    <p>
+                      Different mission statements are shown on the screen. Each statement describes a basic DSA concept.
+                    </p>
+                    <div className="rounded-[1.1rem] border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Your Task</p>
+                      <p className="mt-1">Drag each statement to the correct concept category.</p>
                     </div>
-                  )}
+                    <div className="rounded-[1.1rem] border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Goal</p>
+                      <p className="mt-1">Complete the activity by showing that you understand the basic concepts of Data Structures and Algorithms. No coding is required.</p>
+                    </div>
+                    <div className="rounded-[1.1rem] border border-blue-200 bg-blue-50 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-600">Hint</p>
+                      <p className="mt-1 text-blue-900">Look at whether the statement describes storage, allowed behavior, actions, or step-by-step logic.</p>
+                    </div>
+                    <div className="rounded-[1.1rem] border border-slate-200 bg-white p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Understanding Checkpoint</p>
+                      <p className="mt-1">Review your answers and confirm your understanding before moving to the post-test.</p>
+                      <p className="mt-3 text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Checkpoint Prompt</p>
+                      <p className="mt-1">Classify each statement as a data structure, an abstract data type, an ADT operation, or an algorithm.</p>
+                    </div>
+                  </div>
+
+                  {introConceptFeedback ? (
+                    <div className="mt-4 rounded-[1.1rem] border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                      {introConceptFeedback}
+                    </div>
+                  ) : null}
                 </MissionShellCard>
 
-                <MissionShellCard title="Topic Checkpoint" accent={mission.accent} eyebrow="Understanding">
-                  <p className="text-sm leading-6 text-slate-600">Review the prompt and confirm your understanding before moving to the post-test.</p>
-                  <div className="mt-5 rounded-[1rem] border border-slate-200 bg-slate-50 px-4 py-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Checkpoint Prompt</p>
-                    <p className="mt-2 text-sm text-slate-700">{mission.problem?.prompt}</p>
+                <MissionShellCard title="Drag-and-drop Activity" accent={mission.accent} eyebrow="Activity">
+                  <div className="mb-4 flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Activity Type</p>
+                    <span className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-blue-700">
+                      Drag-and-drop
+                    </span>
                   </div>
+
+                  <div
+                    className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      const itemId = event.dataTransfer.getData('text/plain');
+                      if (itemId) {
+                        moveIntroConceptItem(itemId, null);
+                      }
+                    }}
+                  >
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Mission Statements</p>
+                    <div className="mt-3 grid gap-2">
+                      {introUnassignedItems.map((item) => (
+                        <div
+                          key={item.id}
+                          draggable
+                          onDragStart={(event) => event.dataTransfer.setData('text/plain', item.id)}
+                          className="cursor-grab rounded-xl border border-blue-200 bg-white p-3 text-sm font-medium text-slate-700 shadow-sm active:cursor-grabbing"
+                        >
+                          {item.text}
+                        </div>
+                      ))}
+                      {introUnassignedItems.length === 0 ? (
+                        <p className="rounded-xl border border-dashed border-slate-300 bg-white p-3 text-xs text-slate-500">All statements are assigned to categories.</p>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    {INTRO_CONCEPT_ZONES.map((zone) => (
+                      <div
+                        key={zone.key}
+                        onDragOver={(event) => event.preventDefault()}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          const itemId = event.dataTransfer.getData('text/plain');
+                          if (itemId) {
+                            moveIntroConceptItem(itemId, zone.key);
+                          }
+                        }}
+                        className="rounded-2xl border border-blue-100 bg-white p-3 shadow-sm"
+                      >
+                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-500">{zone.label}</p>
+                        <div className="mt-2 min-h-[86px]">
+                          {introZoneAssignments[zone.key] ? (
+                            <div
+                              draggable
+                              onDragStart={(event) => event.dataTransfer.setData('text/plain', introZoneAssignments[zone.key].id)}
+                              className="cursor-grab rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm font-medium text-slate-700 active:cursor-grabbing"
+                            >
+                              {introZoneAssignments[zone.key].text}
+                            </div>
+                          ) : (
+                            <div className="flex min-h-[86px] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 text-xs font-medium text-slate-500">
+                              Drop statement here
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={checkIntroConceptAnswers}
+                      className="rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:brightness-105"
+                      style={{ backgroundColor: mission.accent }}
+                    >
+                      Check Answer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={resetIntroConceptActivity}
+                      className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </MissionShellCard>
+              </div>
+            ) : isRecursionMission ? (
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+                <MissionShellCard title="Arrange the Recursive Process" accent={mission.accent} eyebrow="CONCEPT CHALLENGE">
+                  <div className="space-y-4 text-sm leading-7 text-slate-700">
+                    <p>
+                      A rescue drone is solving a mission task by repeating the same process on a smaller problem. To avoid repeating forever, it must follow the correct recursion flow.
+                    </p>
+                    <div className="rounded-[1.1rem] border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Your Task</p>
+                      <p className="mt-1">Arrange the recursion steps in the correct order.</p>
+                    </div>
+                    <div className="rounded-[1.1rem] border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Goal</p>
+                      <p className="mt-1">Complete the activity by showing that you understand how recursion works. No coding is required.</p>
+                    </div>
+                    <div className="rounded-[1.1rem] border border-blue-200 bg-blue-50 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-600">Hint</p>
+                      <p className="mt-1 text-blue-900">A recursive process must check when to stop before it continues calling itself.</p>
+                    </div>
+                  </div>
+                </MissionShellCard>
+
+                <MissionShellCard title="Ordering Activity" accent={mission.accent} eyebrow="Checkpoint">
+                  <div className="space-y-3">
+                    <div className="space-y-2 rounded-[1.1rem] border border-slate-200 bg-slate-50 p-3">
+                      {recursionOrderCards.map((item, index) => (
+                        <div
+                          key={item.id}
+                          draggable
+                          onDragStart={(event) => event.dataTransfer.setData('text/plain', item.id)}
+                          onDragOver={(event) => event.preventDefault()}
+                          onDrop={(event) => {
+                            event.preventDefault();
+                            const draggedId = event.dataTransfer.getData('text/plain');
+                            reorderRecursionSteps(draggedId, index);
+                          }}
+                          className="cursor-grab rounded-xl border border-blue-200 bg-white p-3 text-sm font-medium text-slate-700 shadow-sm transition hover:border-blue-300 active:cursor-grabbing"
+                        >
+                          <div className="flex items-start gap-3">
+                            <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-blue-200 bg-blue-50 text-xs font-black text-blue-700">
+                              {index + 1}
+                            </span>
+                            <div className="flex-1">
+                              <p>{item.text}</p>
+                              <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">{item.icon}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {recursionOrderFeedback ? (
+                      <div className={`rounded-xl border p-3 text-sm ${recursionOrderSolved ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>
+                        {recursionOrderFeedback}
+                      </div>
+                    ) : null}
+
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={checkRecursionOrderAnswers}
+                        className="rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:brightness-105"
+                        style={{ backgroundColor: mission.accent }}
+                      >
+                        Check Answer
+                      </button>
+                      <button
+                        type="button"
+                        onClick={resetRecursionOrderActivity}
+                        className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                      >
+                        Reset
+                      </button>
+                    </div>
+
+                  </div>
+                </MissionShellCard>
+              </div>
+            ) : (
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+                <MissionShellCard title={mission.problem?.title || 'Problem'} accent={mission.accent} eyebrow="Challenge">
+                  <p className="text-base leading-7 text-slate-700">{mission.problem?.prompt}</p>
+                  <div className="mt-5 rounded-[1.2rem] border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Hint</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">{mission.problem?.hint}</p>
+                  </div>
+                  <div className="mt-4 grid gap-3 rounded-[1.1rem] bg-slate-50 p-4">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm">
+                      Input: small topic-specific example will be provided by the instructor.
+                    </div>
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm">
+                      Goal: finish the starter code so it solves the challenge.
+                    </div>
+                  </div>
+                  {problemSubmitted ? (
+                    <div className="mt-4 rounded-[1.2rem] border border-slate-200 bg-white px-4 py-4 shadow-sm">
+                      <p className="text-xs font-semibold uppercase tracking-[0.26em] text-slate-400">Problem result</p>
+                      <p className="mt-1 text-lg font-semibold text-slate-900">{problemResult?.score || 0}%</p>
+                      <p className="text-sm text-slate-600">{problemResult?.solved ? 'Correct enough to continue.' : mission.problem?.solutionNote}</p>
+                    </div>
+                  ) : null}
                   <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[1.2rem] border border-slate-200 bg-white px-4 py-4 shadow-sm">
                     <p className="text-sm text-slate-600">{problemSubmitted ? 'Checkpoint completed.' : 'Mark this checkpoint complete to continue.'}</p>
                     <div className="flex gap-2">
@@ -777,21 +1094,76 @@ export default function MissionScaffold({ mission }) {
                     </div>
                   </div>
                 </MissionShellCard>
+
+                <MissionShellCard title="Visualization" accent={mission.accent} eyebrow="How it works">
+                  <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm">
+                    Topic visualization will appear here.
+                  </div>
+                </MissionShellCard>
               </div>
-            </div>
+            )
           ) : null}
 
           {currentStage?.key === 'post-test' ? (
             <div className="space-y-3">
-              <ChoiceList title={mission.postTest.title} prompt={mission.postTest.prompt} choices={mission.postTest.choices} selectedIndex={postAnswer} onSelect={setPostAnswer} accent={mission.accent} />
-              <MissionShellCard title="Review Scaffold" accent={mission.accent} eyebrow="Summary">
-                <p className="text-sm leading-7 text-slate-700">{mission.reviewBlurb}</p>
-                <div className="mt-4 grid gap-3 lg:grid-cols-3">
-                  <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-700">Intro review placeholder</div>
-                  <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-700">Visualization review placeholder</div>
-                  <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-700">Concept mastery review placeholder</div>
-                </div>
-              </MissionShellCard>
+              <ChoiceList
+                key={`${currentPostQuestion.prompt}-${postQuestionIndex}`}
+                title={`Question ${postQuestionIndex + 1} of ${postQuestions.length}`}
+                prompt={currentPostQuestion.prompt}
+                choices={currentPostQuestion.choices}
+                selectedIndex={postAnswers[postQuestionIndex]}
+                onSelect={(choiceIndex) => {
+                  const nextAnswers = [...postAnswers];
+                  nextAnswers[postQuestionIndex] = choiceIndex;
+                  setPostAnswers(nextAnswers);
+                }}
+                accent={mission.accent}
+                disabled={postTestSubmitted}
+              />
+              <div className="rounded-[1.2rem] border border-slate-200 bg-white px-4 py-4 shadow-sm">
+                {!postTestSubmitted ? (
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm text-slate-600">Answer the current question, then move forward one step at a time.</p>
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => setPostQuestionIndex((value) => Math.max(0, value - 1))} disabled={postQuestionIndex === 0} className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40">
+                        Previous
+                      </button>
+                      {!isLastPostQuestion ? (
+                        <button
+                          type="button"
+                          onClick={() => setPostQuestionIndex((value) => Math.min(postQuestions.length - 1, value + 1))}
+                          disabled={!canGoNextPostQuestion}
+                          className="rounded-full px-5 py-3 text-sm font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+                          style={{ backgroundColor: mission.accent }}
+                        >
+                          Next
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={submitPostTest}
+                          disabled={!postAnswers.every((answer) => answer !== null)}
+                          className="rounded-full px-5 py-3 text-sm font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+                          style={{ backgroundColor: mission.accent }}
+                        >
+                          Submit
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.26em] text-slate-400">Post-test result</p>
+                      <p className="mt-1 text-lg font-semibold text-slate-900">{postTestResult?.correctCount || 0}/{postTestResult?.total || postQuestions.length} correct</p>
+                      <p className="text-sm text-slate-600">You scored {postTestResult?.score || 0}%.</p>
+                    </div>
+                    <button type="button" onClick={handleCompleteMissionAndContinue} disabled={saving} className="rounded-full px-5 py-3 text-sm font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50" style={{ backgroundColor: mission.accent }}>
+                      {saving ? 'Saving...' : 'Finish and Continue'}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           ) : null}
 

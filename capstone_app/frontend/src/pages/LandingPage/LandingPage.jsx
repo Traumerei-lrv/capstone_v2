@@ -1,4 +1,4 @@
-import { Gamepad2, Rocket, Shield } from 'lucide-react';
+import { Gamepad2, Rocket } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import HyperSpaceHorizontal from '../../components/HyperSpaceHorizontal';
 import maskot from '../../assets/img/maskot.png';
@@ -50,10 +50,6 @@ export default function LandingPage() {
 
       <main className="relative z-10 mx-auto w-full max-w-7xl px-6 py-16 md:py-20">
         <section className="max-w-5xl">
-          <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white/94 px-3 py-1 text-xs font-black uppercase tracking-widest text-blue-700">
-            <Rocket className="h-4 w-4" />
-            Mission Control Academy
-          </p>
           <h1 className="text-5xl font-black leading-tight text-white [text-shadow:0_6px_20px_rgba(5,13,29,0.85)] md:text-6xl lg:text-7xl">
             Master Data Structures And Algorithms
           </h1>
@@ -67,13 +63,6 @@ export default function LandingPage() {
             >
               <Rocket className="h-4 w-4" />
               Start Learning
-            </Link>
-            <Link
-              to="/login"
-              className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-white px-6 py-3 text-sm font-black uppercase tracking-wider text-blue-700 transition hover:bg-blue-50"
-            >
-              <Shield className="h-4 w-4" />
-              Login
             </Link>
           </div>
 

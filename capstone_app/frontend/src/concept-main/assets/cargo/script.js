@@ -1,34 +1,55 @@
-﻿const cargoTypes = {
-  "Fuel Cell": { color: 0xffd500, label: "FUEL", texture: "fuelcell" },
-  "Oxygen Tank": { color: 0x389fe1, label: "O2", texture: "oxygen" },
-  "Repair Kit": { color: 0xff5555, label: "FIX", texture: "repairkit" },
-  "Data Core": { color: 0x8e5cff, label: "DATA", texture: "datacore" },
-  "Shield Battery": { color: 0x00ffaa, label: "SHLD", texture: "shield" },
-  "Food Capsule": { color: 0xffaa00, label: "FOOD", texture: "food" }
+const cargoTypes = {
+  cooling_valve: { color: 0x3ca3ff, label: "VALVE", texture: "cooling_valve" },
+  fuel_injector: { color: 0xff9f43, label: "INJ", texture: "fuel_injector" },
+  ignition_coil: { color: 0xf5dc53, label: "COIL", texture: "ignition_coil" },
+  plasma_core: { color: 0xa06bff, label: "CORE", texture: "plasma_core" },
+  stabilizer: { color: 0x46e2c3, label: "STAB", texture: "stabilizer" }
 };
 
 const cargoNames = Object.keys(cargoTypes);
+const GAME_PROGRESS_KEY = "balangkas.ship.games_progress.v1";
+const GAME_PROGRESS_EVENT = "balangkas:games-progress-updated";
+const CARGO_GAME_ID = "cargoStackProtocol";
+
+function markCargoGameComplete() {
+  try {
+    const raw = window.localStorage.getItem(GAME_PROGRESS_KEY);
+    const progress = raw ? JSON.parse(raw) : {};
+
+    if (progress[CARGO_GAME_ID] === true) {
+      return;
+    }
+
+    progress[CARGO_GAME_ID] = true;
+    window.localStorage.setItem(GAME_PROGRESS_KEY, JSON.stringify(progress));
+  } catch {}
+
+  window.dispatchEvent(new Event(GAME_PROGRESS_EVENT));
+}
 
 class CargoScene extends Phaser.Scene {
   constructor() {
     super("CargoScene");
     this.stack = [];
-    this.maxSize = 6;
-    this.slotXs = [160, 250, 340, 430, 520, 610];
-    this.slotY = 430;
+    this.maxSize = cargoNames.length;
+    this.stackX = 286;
+    this.slotBottomY = 472;
+    this.slotStep = 52;
     this.busy = false;
     this.targetOrder = [];
+    this.targetPreview = [];
+    this.slotGuides = [];
+    this.targetSlotGuides = [];
     this.commandQueue = [];
     this.isRunningScript = false;
   }
 
   preload() {
-    this.load.image("fuelcell", "./fuelcell.png");
-    this.load.image("oxygen", "./oxygen.png");
-    this.load.image("repairkit", "./repairkit.png");
-    this.load.image("datacore", "./datacore.png");
-    this.load.image("shield", "./shield.png");
-    this.load.image("food", "./food.png");
+    this.load.image("cooling_valve", "./cooling_valve.png");
+    this.load.image("fuel_injector", "./fuel_injector.png");
+    this.load.image("ignition_coil", "./ignition_coil.png");
+    this.load.image("plasma_core", "./plasma_core.png");
+    this.load.image("stabilizer", "./stabilizer.png");
   }
 
   create() {
@@ -56,35 +77,23 @@ class CargoScene extends Phaser.Scene {
       );
     }
 
-    this.add.rectangle(w / 2, h - 45, w, 90, 0x001f4f, 0.95).setStrokeStyle(2, 0x00509d);
-    this.add.rectangle(120, 80, 210, 90, 0x012f73, 0.85).setStrokeStyle(2, 0xfdc500);
-    this.add.rectangle(w - 120, 88, 220, 95, 0x012f73, 0.85).setStrokeStyle(2, 0xfdc500);
-
-    this.add.text(36, 58, "HORIZONTAL CARGO BAY", {
-      fontFamily: "monospace",
-      fontSize: "14px",
-      color: "#ffd500"
-    });
-
-    this.warningLight = this.add.circle(w - 60, 52, 11, 0xff0000, 0.35).setStrokeStyle(2, 0xff7777);
-
-    this.chamber = this.add.rectangle(w / 2, this.slotY + 18, 560, 120, 0x001f52, 0.45)
+    this.chamber = this.add.rectangle(this.stackX, 298, 170, 410, 0x001f52, 0.45)
       .setStrokeStyle(4, 0x89b2ff);
-
-    this.slotXs.forEach((x, idx) => {
-      this.add.line(x, this.slotY, 0, -44, 0, 44, 0x2e72d6, 0.8).setLineWidth(2);
-      this.add.text(x - 12, this.slotY + 56, `S${idx + 1}`, {
-        fontFamily: "monospace",
-        fontSize: "12px",
-        color: "#9fc5ff"
-      });
+    this.targetChamber = this.add.rectangle(548, 298, 170, 410, 0x001f52, 0.45)
+      .setStrokeStyle(4, 0x66d3ff, 0.8);
+    this.add.text(488, 100, "TARGET STACK", {
+      fontFamily: "monospace",
+      fontSize: "13px",
+      color: "#bce6ff"
     });
+
+    this.redrawSlotGuides();
 
     this.tractorBeam = this.add.rectangle(0, 150, 78, 260, 0x7bdfff, 0)
       .setOrigin(0.5, 0)
       .setVisible(false);
 
-    this.scannerBeam = this.add.rectangle(0, 0, 86, 56, 0x00ffaa, 0).setVisible(false);
+    this.scannerBeam = this.add.rectangle(0, 0, 92, 64, 0x00ffaa, 0).setVisible(false);
 
     this.topTag = this.add.text(0, 0, "TOP", {
       fontFamily: "monospace",
@@ -105,10 +114,10 @@ class CargoScene extends Phaser.Scene {
 
   createCrate(itemName, startX, startY) {
     const data = cargoTypes[itemName];
-    const crate = this.add.image(startX, startY, data.texture).setDisplaySize(82, 56);
+    const crate = this.add.image(startX, startY, data.texture).setDisplaySize(122, 36);
     this.physics.add.existing(crate);
 
-    const label = this.add.text(startX, startY + 22, data.label, {
+    const label = this.add.text(startX, startY + 18, data.label, {
       fontFamily: "monospace",
       fontSize: "10px",
       color: "#091523",
@@ -130,6 +139,7 @@ class CargoScene extends Phaser.Scene {
   setTargetOrder() {
     this.targetOrder = this.makeRandomOrder(4);
     document.getElementById("targetOrder").textContent = this.targetOrder.join(" -> ");
+    this.renderTargetPreview();
   }
 
   updateCurrentOrderText() {
@@ -144,25 +154,25 @@ class CargoScene extends Phaser.Scene {
     }
 
     if (this.stack.length >= this.maxSize) {
-      this.showWarning("STACK OVERFLOW: Cargo chamber full.");
+      this.showWarning("STACK OVERFLOW: Engine rack is full.");
       return false;
     }
 
     const slotIndex = this.stack.length;
-    const targetX = this.slotXs[slotIndex];
-    const targetY = this.slotY;
-    const crateObj = this.createCrate(itemName, 760, 175);
+    const targetX = this.stackX;
+    const targetY = this.slotBottomY - slotIndex * this.slotStep;
+    const crateObj = this.createCrate(itemName, 740, 130);
     this.busy = true;
 
     const body = crateObj.sprite.body;
     body.setAllowGravity(false);
-    body.setVelocity(-700, 520);
+    body.setVelocity(-700, 610);
 
     const syncEvent = this.time.addEvent({
       delay: 16,
       loop: true,
       callback: () => {
-        crateObj.text.setPosition(crateObj.sprite.x, crateObj.sprite.y + 22);
+        crateObj.text.setPosition(crateObj.sprite.x, crateObj.sprite.y + 18);
       }
     });
 
@@ -170,7 +180,7 @@ class CargoScene extends Phaser.Scene {
       syncEvent.remove(false);
       body.setVelocity(0, 0);
       crateObj.sprite.setPosition(targetX, targetY);
-      crateObj.text.setPosition(targetX, targetY + 22);
+      crateObj.text.setPosition(targetX, targetY + 18);
 
       this.tweens.add({
         targets: [crateObj.sprite, crateObj.text],
@@ -178,7 +188,6 @@ class CargoScene extends Phaser.Scene {
         duration: 70,
         yoyo: true,
         onComplete: () => {
-          // PUSH: add item to the top of the stack
           this.stack.push(crateObj);
           this.emitSparks(targetX, targetY + 24);
           this.busy = false;
@@ -200,14 +209,13 @@ class CargoScene extends Phaser.Scene {
     }
 
     if (this.stack.length === 0) {
-      this.showWarning("STACK UNDERFLOW: No cargo to remove.");
+      this.showWarning("STACK UNDERFLOW: No part to remove.");
       if (fromScript) this.runNextCommand();
       return false;
     }
 
     this.busy = true;
 
-    // POP: remove the top item from the stack
     const removedItem = this.stack.pop();
 
     this.tractorBeam.setPosition(removedItem.sprite.x, 150).setVisible(true).setAlpha(0.45);
@@ -247,16 +255,17 @@ class CargoScene extends Phaser.Scene {
     }
 
     if (this.stack.length === 0) {
-      this.showWarning("No cargo to scan.");
+      this.showWarning("No part to scan.");
       if (fromScript) this.runNextCommand();
       return false;
     }
 
-    // PEEK: check top item without removing it
     const topItem = this.stack[this.stack.length - 1];
+    const baseScaleX = topItem.sprite.scaleX;
+    const baseScaleY = topItem.sprite.scaleY;
 
     this.scannerBeam.setVisible(true).setAlpha(0.45).setPosition(topItem.sprite.x, topItem.sprite.y);
-    this.topTag.setVisible(true).setPosition(topItem.sprite.x, topItem.sprite.y - 42);
+    this.topTag.setVisible(true).setPosition(topItem.sprite.x, topItem.sprite.y - 48);
 
     this.tweens.add({
       targets: this.scannerBeam,
@@ -272,13 +281,13 @@ class CargoScene extends Phaser.Scene {
 
     this.tweens.add({
       targets: topItem.sprite,
-      scaleX: 1.08,
-      scaleY: 1.08,
+      scaleX: baseScaleX * 1.05,
+      scaleY: baseScaleY * 1.05,
       duration: 75,
       yoyo: true,
       repeat: 3,
       onComplete: () => {
-        topItem.sprite.setScale(1, 1);
+        topItem.sprite.setScale(baseScaleX, baseScaleY);
         this.topTag.setVisible(false);
         if (fromScript) this.runNextCommand();
       }
@@ -290,13 +299,12 @@ class CargoScene extends Phaser.Scene {
   }
 
   seedRandomStack() {
-    const initialCount = Phaser.Math.Between(3, 5);
+    const initialCount = Phaser.Math.Between(2, this.maxSize);
     for (let i = 0; i < initialCount; i += 1) {
       const name = this.randomCargoName();
-      const x = this.slotXs[i];
-      const crateObj = this.createCrate(name, x, this.slotY);
-      crateObj.text.setPosition(x, this.slotY + 22);
-      // PUSH: add item to the top of the stack
+      const y = this.slotBottomY - i * this.slotStep;
+      const crateObj = this.createCrate(name, this.stackX, y);
+      crateObj.text.setPosition(this.stackX, y + 18);
       this.stack.push(crateObj);
     }
   }
@@ -312,7 +320,6 @@ class CargoScene extends Phaser.Scene {
     this.tractorBeam.setVisible(false).setAlpha(0);
     this.scannerBeam.setVisible(false).setAlpha(0);
     this.topTag.setVisible(false);
-    this.warningLight.setFillStyle(0xff0000, 0.35);
 
     this.setTargetOrder();
     this.seedRandomStack();
@@ -344,17 +351,72 @@ class CargoScene extends Phaser.Scene {
 
   showWarning(message) {
     this.updateStatus(message);
-
     this.tweens.add({
-      targets: this.warningLight,
-      alpha: { from: 0.25, to: 1 },
+      targets: this.chamber,
+      alpha: { from: 0.42, to: 0.7 },
       duration: 90,
       yoyo: true,
-      repeat: 4,
-      onUpdate: () => this.warningLight.setFillStyle(0xff3030)
+      repeat: 4
     });
 
     this.cameras.main.shake(120, 0.0035);
+  }
+
+  redrawSlotGuides() {
+    this.slotGuides.forEach((item) => item.destroy());
+    this.targetSlotGuides.forEach((item) => item.destroy());
+    this.slotGuides = [];
+    this.targetSlotGuides = [];
+
+    for (let idx = 0; idx < this.maxSize; idx += 1) {
+      const y = this.slotBottomY - idx * this.slotStep;
+
+      const playLine = this.add.line(this.stackX, y, -48, 0, 48, 0, 0x2e72d6, 0.8).setLineWidth(2);
+      const playText = this.add.text(this.stackX - 102, y - 9, `S${idx + 1}`, {
+        fontFamily: "monospace",
+        fontSize: "12px",
+        color: "#9fc5ff"
+      });
+      this.slotGuides.push(playLine, playText);
+
+      const targetLine = this.add.line(548, y, -48, 0, 48, 0, 0x66d3ff, 0.55).setLineWidth(2);
+      this.targetSlotGuides.push(targetLine);
+    }
+  }
+
+  expandStackLevel(fromScript = false) {
+    if (this.busy) {
+      this.updateStatus("Cargo arm busy. Wait for current operation.");
+      return false;
+    }
+
+    this.maxSize += 1;
+    this.redrawSlotGuides();
+    this.renderTargetPreview();
+    this.updateStatus(`Stack expanded. New max size: ${this.maxSize}`);
+    if (fromScript) this.runNextCommand();
+    return true;
+  }
+
+  clearTargetPreview() {
+    this.targetPreview.forEach((item) => {
+      item.sprite.destroy();
+      item.text.destroy();
+    });
+    this.targetPreview = [];
+  }
+
+  renderTargetPreview() {
+    this.clearTargetPreview();
+
+    for (let i = 0; i < this.targetOrder.length; i += 1) {
+      const itemName = this.targetOrder[i];
+      const y = this.slotBottomY - i * this.slotStep;
+      const crateObj = this.createCrate(itemName, 548, y);
+      crateObj.sprite.setAlpha(0.8);
+      crateObj.text.setAlpha(0.95);
+      this.targetPreview.push(crateObj);
+    }
   }
 
   updateStatus(lastActionText) {
@@ -373,17 +435,24 @@ class CargoScene extends Phaser.Scene {
     const matched = sameLength && current.every((name, idx) => name === target[idx]);
 
     if (matched) {
-      missionEl.textContent = "Mission Complete: Target arrangement achieved.";
+      missionEl.textContent = "Mission Complete: Engine stack calibrated.";
       missionEl.style.color = "#167b16";
+      markCargoGameComplete();
     } else {
-      missionEl.textContent = "Mission Incomplete: Match the target arrangement.";
+      missionEl.textContent = "Mission Incomplete: Match the target stack.";
       missionEl.style.color = "#b51616";
     }
   }
 
   normalizeCargoName(raw) {
     const cleaned = raw.trim().toLowerCase();
-    return cargoNames.find((name) => name.toLowerCase() === cleaned) || null;
+    const underscored = cleaned.replace(/\s+/g, "_");
+    return (
+      cargoNames.find((name) => {
+        const id = name.toLowerCase();
+        return cleaned === id || underscored === id;
+      }) || null
+    );
   }
 
   startScript(commands) {
@@ -428,6 +497,11 @@ class CargoScene extends Phaser.Scene {
 
     if (op === "RESET") {
       this.resetStack();
+      return;
+    }
+
+    if (op === "EXPAND") {
+      this.expandStackLevel(true);
       return;
     }
 
@@ -476,6 +550,9 @@ document.getElementById("peekBtn").addEventListener("click", () => {
 document.getElementById("resetBtn").addEventListener("click", () => {
   getScene().resetStack();
 });
+document.getElementById("expandBtn").addEventListener("click", () => {
+  getScene().expandStackLevel();
+});
 
 function parseCommands(rawText) {
   const lines = rawText.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
@@ -484,7 +561,7 @@ function parseCommands(rawText) {
   for (const line of lines) {
     const upper = line.toUpperCase();
 
-    if (upper === "POP" || upper === "PEEK" || upper === "RESET") {
+    if (upper === "POP" || upper === "PEEK" || upper === "RESET" || upper === "EXPAND") {
       commands.push({ op: upper, raw: line });
       continue;
     }

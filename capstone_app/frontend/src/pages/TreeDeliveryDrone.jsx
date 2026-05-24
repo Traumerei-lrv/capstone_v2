@@ -92,6 +92,9 @@ const DEFAULT_VALUES = ["1", "2", "3", "4", "5"];
 const XP_STORAGE_KEY = "balangkas.student.bonus_xp";
 const TREE_GAME_XP_REWARD = 120;
 const GALAXY_TEXTURES = [galaxy1, galaxy2, galaxy3, galaxy4, galaxy5];
+const GAME_PROGRESS_KEY = "balangkas.ship.games_progress.v1";
+const GAME_PROGRESS_EVENT = "balangkas:games-progress-updated";
+const TREE_GAME_ID = "treeDeliveryDrone";
 
 export default function TreeDeliveryDrone({ onBack }) {
   const navigate = useNavigate();
@@ -141,6 +144,24 @@ export default function TreeDeliveryDrone({ onBack }) {
     popupTimerRef.current = setTimeout(() => {
       setXpPopup(null);
     }, 2200);
+  };
+
+  const markTreeGameComplete = () => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const raw = window.localStorage.getItem(GAME_PROGRESS_KEY);
+      const progress = raw ? JSON.parse(raw) : {};
+
+      if (progress[TREE_GAME_ID] === true) {
+        return;
+      }
+
+      progress[TREE_GAME_ID] = true;
+      window.localStorage.setItem(GAME_PROGRESS_KEY, JSON.stringify(progress));
+    } catch {}
+
+    window.dispatchEvent(new Event(GAME_PROGRESS_EVENT));
   };
 
   useEffect(() => {
@@ -376,6 +397,10 @@ export default function TreeDeliveryDrone({ onBack }) {
           rewardIssuedRef.current = true;
           awardXp(TREE_GAME_XP_REWARD);
           showXpPopup(TREE_GAME_XP_REWARD);
+        }
+
+        if (complete) {
+          markTreeGameComplete();
         }
 
         this.emitUiState(

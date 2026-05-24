@@ -4,6 +4,9 @@ const XP_STORAGE_KEY = "balangkas.student.bonus_xp";
 const TURBINE_XP_REWARD = 150;
 const TURBINE_STATE_STORAGE_KEY = "balangkas.turbine_failure.v2";
 const TURBINE_ALL_RUNNING_KEY = "balangkas.turbines.all_running";
+const GAME_PROGRESS_KEY = "balangkas.ship.games_progress.v1";
+const GAME_PROGRESS_EVENT = "balangkas:games-progress-updated";
+const TURBINE_GAME_ID = "turbineFailure";
 
 const TURBINES = [
   {
@@ -242,6 +245,22 @@ function awardXp(amount) {
   } catch {}
 }
 
+function markTurbineGameComplete() {
+  try {
+    const raw = window.localStorage.getItem(GAME_PROGRESS_KEY);
+    const progress = raw ? JSON.parse(raw) : {};
+
+    if (progress[TURBINE_GAME_ID] === true) {
+      return;
+    }
+
+    progress[TURBINE_GAME_ID] = true;
+    window.localStorage.setItem(GAME_PROGRESS_KEY, JSON.stringify(progress));
+  } catch {}
+
+  window.dispatchEvent(new Event(GAME_PROGRESS_EVENT));
+}
+
 function showXpPopup(message) {
   const existing = document.querySelector(".xp-popup");
 
@@ -356,6 +375,10 @@ function updateAllRunningFlag() {
   try {
     window.localStorage.setItem(TURBINE_ALL_RUNNING_KEY, String(allSolved));
   } catch {}
+
+  if (allSolved) {
+    markTurbineGameComplete();
+  }
 
   window.dispatchEvent(new Event("balangkas:turbines-updated"));
 }

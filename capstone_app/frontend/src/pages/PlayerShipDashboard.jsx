@@ -9,8 +9,14 @@ import { clearDemoAuthSession } from "../demoAuth";
 const turbineFailurePage = new URL("../concept-main/assets/turbine/turbine_failure.html", import.meta.url).href;
 const rocketAvoidingPlanPage = new URL("../concept-main/assets/asteroids/index.html", import.meta.url).href;
 const cargoStackProtocolPage = new URL("../concept-main/assets/cargo/index.html", import.meta.url).href;
-const TURBINE_ALL_RUNNING_KEY = "balangkas.turbines.all_running";
-const TURBINE_STATE_STORAGE_KEY = "balangkas.turbine_failure.v2";
+const GAME_PROGRESS_KEY = "balangkas.ship.games_progress.v1";
+const GAME_PROGRESS_EVENT = "balangkas:games-progress-updated";
+const REQUIRED_GAME_IDS = [
+  "turbineFailure",
+  "treeDeliveryDrone",
+  "rocketAvoidingPlan",
+  "cargoStackProtocol",
+];
 
 const challengeHitboxes = [
   {
@@ -52,46 +58,38 @@ export default function PlayerShipDashboard() {
   const [progressComplete, setProgressComplete] = useState(false);
   const [isNodeMapLoading, setIsNodeMapLoading] = useState(false);
   const [hoveredHitbox, setHoveredHitbox] = useState(null);
-  const [allTurbinesRunning, setAllTurbinesRunning] = useState(false);
+  const [allFixesComplete, setAllFixesComplete] = useState(false);
 
   useEffect(() => {
-    const isAllSolvedFromState = () => {
+    const areAllGamesComplete = () => {
       try {
-        const raw = window.localStorage.getItem(TURBINE_STATE_STORAGE_KEY);
+        const raw = window.localStorage.getItem(GAME_PROGRESS_KEY);
         if (!raw) return false;
 
         const parsed = JSON.parse(raw);
-        const turbines = parsed?.turbines;
+        if (!parsed || typeof parsed !== "object") return false;
 
-        if (!turbines) return false;
-
-        const t1 = Boolean(turbines["turbine-1"]?.success);
-        const t2 = Boolean(turbines["turbine-2"]?.success);
-        const t3 = Boolean(turbines["turbine-3"]?.success);
-
-        return t1 && t2 && t3;
+        return REQUIRED_GAME_IDS.every((gameId) => parsed[gameId] === true);
       } catch {
         return false;
       }
     };
 
-    const syncTurbineBoost = () => {
+    const syncShipBoost = () => {
       try {
-        const fromState = isAllSolvedFromState();
-        const fromFlag = window.localStorage.getItem(TURBINE_ALL_RUNNING_KEY) === "true";
-        setAllTurbinesRunning(fromState && fromFlag);
+        setAllFixesComplete(areAllGamesComplete());
       } catch {
-        setAllTurbinesRunning(false);
+        setAllFixesComplete(false);
       }
     };
 
-    syncTurbineBoost();
-    window.addEventListener("storage", syncTurbineBoost);
-    window.addEventListener("balangkas:turbines-updated", syncTurbineBoost);
+    syncShipBoost();
+    window.addEventListener("storage", syncShipBoost);
+    window.addEventListener(GAME_PROGRESS_EVENT, syncShipBoost);
 
     return () => {
-      window.removeEventListener("storage", syncTurbineBoost);
-      window.removeEventListener("balangkas:turbines-updated", syncTurbineBoost);
+      window.removeEventListener("storage", syncShipBoost);
+      window.removeEventListener(GAME_PROGRESS_EVENT, syncShipBoost);
     };
   }, []);
 
@@ -159,11 +157,11 @@ export default function PlayerShipDashboard() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black text-white">
-      <HyperspaceBackground boosted={allTurbinesRunning} />
+      <HyperspaceBackground boosted={allFixesComplete} />
 
-      {allTurbinesRunning ? (
+      {allFixesComplete ? (
         <div className="absolute left-1/2 top-4 z-50 -translate-x-1/2 rounded-full border border-emerald-200/70 bg-emerald-900/45 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.26em] text-emerald-100">
-          All Turbines Running
+          fixes done, ship is now at 100% performance
         </div>
       ) : null}
 

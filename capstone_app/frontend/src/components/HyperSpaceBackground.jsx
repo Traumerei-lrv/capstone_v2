@@ -62,7 +62,8 @@ export default function HyperspaceBackground({ boosted = false }) {
       const centerX = canvas.width / 2;
       const centerY = canvas.height / 2;
 
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       starsRef.current.forEach((star) => {
@@ -139,6 +140,7 @@ export default function HyperspaceBackground({ boosted = false }) {
         zIndex: 0,
         pointerEvents: 'none',
         display: 'block',
+        background: '#000',
       }}
     />
   );

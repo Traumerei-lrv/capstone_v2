@@ -10,6 +10,9 @@ const tileSize = 88;
 const gridPadding = 20;
 const SHIP_SCALE = 0.1;
 const ASTEROID_SCALE = 0.1;
+const GAME_PROGRESS_KEY = "balangkas.ship.games_progress.v1";
+const GAME_PROGRESS_EVENT = "balangkas:games-progress-updated";
+const ASTEROID_GAME_ID = "rocketAvoidingPlan";
 
 let maze = cloneMaze(BASE_MAZE);
 let rows = 0;
@@ -51,6 +54,22 @@ const dom = {
   arrayValue: document.getElementById("array-value"),
   invalidAttempts: document.getElementById("invalid-attempts"),
 };
+
+function markAsteroidGameComplete() {
+  try {
+    const raw = window.localStorage.getItem(GAME_PROGRESS_KEY);
+    const progress = raw ? JSON.parse(raw) : {};
+
+    if (progress[ASTEROID_GAME_ID] === true) {
+      return;
+    }
+
+    progress[ASTEROID_GAME_ID] = true;
+    window.localStorage.setItem(GAME_PROGRESS_KEY, JSON.stringify(progress));
+  } catch {}
+
+  window.dispatchEvent(new Event(GAME_PROGRESS_EVENT));
+}
 
 function cloneMaze(source) {
   return source.map((row) => [...row]);
@@ -475,45 +494,18 @@ function incrementInvalidAttempt() {
   }
 }
 
-function parseCoordinateInput(rawInput) {
-  const cleaned = rawInput.trim();
-  const match = cleaned.match(/^(-?\d+)\s*,\s*(-?\d+)$/);
-  if (!match) return null;
-  return {
-    row: Number.parseInt(match[1], 10),
-    col: Number.parseInt(match[2], 10),
-  };
-}
-
-function parseLoopCommand(rawInput) {
-  const cleaned = rawInput.trim();
-  const loopMatch = cleaned.match(/^loop\s+(\d+)\s*:\s*(.+)$/i);
-
-  if (!loopMatch) return null;
-
-  const repeatCount = Number.parseInt(loopMatch[1], 10);
-  const sequenceText = loopMatch[2];
-
-  if (!Number.isFinite(repeatCount) || repeatCount < 1 || repeatCount > 20) {
-    return { error: "Loop count must be between 1 and 20." };
-  }
-
-  const coordRegex = /(-?\d+)\s*,\s*(-?\d+)/g;
+function parseCoordinateSequence(rawInput) {
+  const matches = rawInput.matchAll(/(-?\d+)\s*,\s*(-?\d+)/g);
   const path = [];
-  let match;
 
-  while ((match = coordRegex.exec(sequenceText)) !== null) {
+  for (const match of matches) {
     path.push({
       row: Number.parseInt(match[1], 10),
       col: Number.parseInt(match[2], 10),
     });
   }
 
-  if (path.length === 0) {
-    return { error: "Loop command needs coordinates. Example: loop 3: 0,1; 0,2" };
-  }
-
-  return { repeatCount, path };
+  return path;
 }
 
 async function handleDangerTile(row, col) {
@@ -549,6 +541,7 @@ function handleExitTile() {
   setStatus("Safe route found!");
   uiState.isGameOver = true;
   showWinOverlay();
+  markAsteroidGameComplete();
   uiState.isBusy = false;
 }
 
@@ -675,64 +668,43 @@ function showBfsHint() {
 }
 
 function parseAndValidateInput() {
-  const parsed = parseCoordinateInput(dom.input.value);
-  if (!parsed) {
-    setStatus("Invalid input format. Use row,col like 2,3.");
+  const path = parseCoordinateSequence(dom.input.value);
+  if (path.length === 0) {
+    setStatus("Invalid input format. Use coordinates like 2,3 or 2,3;2,4;3,4.");
     incrementInvalidAttempt();
     return null;
   }
 
-  return parsed;
+  return path;
 }
 
 async function handleCoordinateInput() {
-  const loopCommand = parseLoopCommand(dom.input.value);
-  if (loopCommand) {
-    if (loopCommand.error) {
-      setStatus(loopCommand.error);
+  if (uiState.isBusy || uiState.isGameOver) {
+    setStatus("Systems busy. Wait for the current action.");
+    return;
+  }
+
+  const path = parseAndValidateInput();
+  if (!path) return;
+
+  for (let stepIndex = 0; stepIndex < path.length; stepIndex += 1) {
+    const step = path[stepIndex];
+    const check = validateMove(step.row, step.col);
+
+    if (!check.ok) {
+      setStatus(`Path stopped at step ${stepIndex + 1}: ${check.reason}`);
       incrementInvalidAttempt();
       return;
     }
 
-    if (uiState.isBusy || uiState.isGameOver) {
-      setStatus("Systems busy. Wait for the current action.");
+    await moveShipTo(step.row, step.col);
+
+    if (check.cellType === "D" || uiState.isGameOver) {
       return;
     }
-
-    for (let iteration = 0; iteration < loopCommand.repeatCount; iteration += 1) {
-      for (let stepIndex = 0; stepIndex < loopCommand.path.length; stepIndex += 1) {
-        const step = loopCommand.path[stepIndex];
-        const check = validateMove(step.row, step.col);
-
-        if (!check.ok) {
-          setStatus(`Loop stopped at pass ${iteration + 1}: ${check.reason}`);
-          incrementInvalidAttempt();
-          return;
-        }
-
-        await moveShipTo(step.row, step.col);
-
-        if (check.cellType === "D" || uiState.isGameOver) {
-          return;
-        }
-      }
-    }
-
-    setStatus("Loop command complete.");
-    return;
   }
 
-  const parsed = parseAndValidateInput();
-  if (!parsed) return;
-
-  const check = validateMove(parsed.row, parsed.col);
-  if (!check.ok) {
-    setStatus(check.reason);
-    incrementInvalidAttempt();
-    return;
-  }
-
-  await moveShipTo(parsed.row, parsed.col);
+  setStatus("Path sequence complete.");
 }
 
 function generateRandomMaze(rowCount, colCount) {

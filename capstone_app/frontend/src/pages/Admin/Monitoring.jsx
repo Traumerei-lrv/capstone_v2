@@ -68,7 +68,7 @@ export default function Monitoring() {
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard label="Total Users" value={overview?.summary?.totalUsers || 0} note="profiles" />
         <MetricCard label="Active Users" value={overview?.summary?.activeUsers || 0} note="recently seen" accent="#0f766e" />
-        <MetricCard label="Courses" value={overview?.summary?.totalCourses || 0} note="courses table" accent="#ff9800" />
+        <MetricCard label="Classes" value={overview?.summary?.totalCourses || 0} note="courses table" accent="#ff9800" />
         <MetricCard label="Materials" value={overview?.summary?.totalMaterials || 0} note="materials table" accent="#dc2626" />
       </div>
 

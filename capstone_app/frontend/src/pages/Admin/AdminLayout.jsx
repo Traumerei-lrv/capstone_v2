@@ -66,7 +66,7 @@ export default function AdminLayout() {
           <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-500">Admin Dashboard</p>
           <h1 className="mt-1 text-2xl font-black text-blue-900">Platform Administration</h1>
           <p className="mt-1 text-sm text-slate-500">
-            {`Welcome, ${user?.profile?.full_name || "Administrator"}. Manage users, classes, system activity, and learning content in one control center.`}
+            {`Welcome, ${user?.profile?.full_name || "Administrator"}.`}
           </p>
           <div className="mt-4 flex flex-wrap gap-2 lg:hidden">
             {tabs.map((tab) => (

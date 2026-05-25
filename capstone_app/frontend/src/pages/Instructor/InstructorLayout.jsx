@@ -1,4 +1,4 @@
-import { Bell, Layout, User } from 'lucide-react';
+import { Bell, User } from 'lucide-react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 const tabs = [
@@ -11,7 +11,7 @@ function TabLink({ tab }) {
     <NavLink
       to={tab.to}
       end={tab.end}
-      className={({ isActive }) => `pb-1 text-sm uppercase tracking-wide transition-colors ${
+      className={({ isActive }) => `pb-1 text-sm font-semibold uppercase tracking-wider transition-colors ${
         isActive ? 'text-white font-bold border-b-2 border-white' : 'text-blue-100 font-medium hover:text-white'
       }`}
     >
@@ -28,13 +28,7 @@ export default function InstructorLayout() {
     <div className="min-h-screen bg-[#f9f9ff] text-slate-900">
       <header className="bg-[#5089c6] border-b-2 border-blue-700 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
-                <Layout className="text-[#5089c6] w-5 h-5" />
-              </div>
-              <span className="text-white font-black text-2xl tracking-tighter italic">BALANGKAS</span>
-            </div>
+          <div className="flex items-center">
             <nav className="hidden md:flex items-center gap-6">
               {tabs.map((tab) => (
                 <TabLink key={tab.label} tab={tab} />

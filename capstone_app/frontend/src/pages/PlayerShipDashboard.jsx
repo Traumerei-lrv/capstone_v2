@@ -5,7 +5,7 @@ import LoadingScreen from "./LoadingScreen";
 import cockpitDashboard from "../assets/img/cockpit-dashboard.png";
 import btnAdventure from "../assets/img/btn_adventure-fullreso.png";
 import { clearDemoAuthSession } from "../demoAuth";
-
+ 
 const turbineFailurePage = new URL("../concept-main/assets/turbine/turbine_failure.html", import.meta.url).href;
 const rocketAvoidingPlanPage = new URL("../concept-main/assets/asteroids/index.html", import.meta.url).href;
 const cargoStackProtocolPage = new URL("../concept-main/assets/cargo/index.html", import.meta.url).href;
@@ -21,27 +21,34 @@ const REQUIRED_GAME_IDS = [
 const challengeHitboxes = [
   {
     id: "turbine-failure-hitbox",
+    progressId: "turbineFailure",
     href: turbineFailurePage,
-    title: "Turbine Failure Challenge",
+    title: "Hyperspace Turbine",
+    description: "Stabilize the failing hyperspace turbine before heat spikes trigger a full engine shutdown.",
     left: "20.47%",
     top: "53.8%",
   },
   {
     id: "tree-delivery-drone-hitbox",
+    progressId: "treeDeliveryDrone",
     route: "/tree-delivery-drone",
-    title: "Tree Delivery Drone Challenge",
+    title: "Galaxy Hop Planner",
+    description: "Plan the shortest delivery route across star systems and optimize each hop for fuel efficiency.",
     left: "31.82%",
     top: "53.8%",
   },
   {
     id: "over-heat-hitbox",
+    progressId: "rocketAvoidingPlan",
     href: rocketAvoidingPlanPage,
-    title: "Rocket Avoiding Plan",
+    title: "Asteroid Avoiding Plan",
+    description: "Navigate through an asteroid field and chart safe maneuvers to keep the ship hull intact.",
     left: "43.75%",
     top: "53.15%",
   },
   {
     id: "cargo-stack-protocol-hitbox",
+    progressId: "cargoStackProtocol",
     href: cargoStackProtocolPage,
     title: "Cargo Stack Protocol",
     description: "Practice stack operations with a spaceship cargo bay simulation.",
@@ -59,28 +66,30 @@ export default function PlayerShipDashboard() {
   const [isNodeMapLoading, setIsNodeMapLoading] = useState(false);
   const [hoveredHitbox, setHoveredHitbox] = useState(null);
   const [allFixesComplete, setAllFixesComplete] = useState(false);
+  const [gameProgress, setGameProgress] = useState({});
 
   useEffect(() => {
-    const areAllGamesComplete = () => {
+    const getProgressSnapshot = () => {
       try {
         const raw = window.localStorage.getItem(GAME_PROGRESS_KEY);
-        if (!raw) return false;
+        if (!raw) return {};
 
         const parsed = JSON.parse(raw);
-        if (!parsed || typeof parsed !== "object") return false;
-
-        return REQUIRED_GAME_IDS.every((gameId) => parsed[gameId] === true);
+        return parsed && typeof parsed === "object" ? parsed : {};
       } catch {
-        return false;
+        return {};
       }
     };
 
     const syncShipBoost = () => {
-      try {
-        setAllFixesComplete(areAllGamesComplete());
-      } catch {
-        setAllFixesComplete(false);
-      }
+      const snapshot = getProgressSnapshot();
+      const nextProgress = REQUIRED_GAME_IDS.reduce((acc, gameId) => {
+        acc[gameId] = snapshot[gameId] === true;
+        return acc;
+      }, {});
+
+      setGameProgress(nextProgress);
+      setAllFixesComplete(REQUIRED_GAME_IDS.every((gameId) => nextProgress[gameId] === true));
     };
 
     syncShipBoost();
@@ -155,20 +164,49 @@ export default function PlayerShipDashboard() {
     navigate('/', { replace: true });
   };
 
+  const handleResetShipProgress = () => {
+    try {
+      const raw = window.localStorage.getItem(GAME_PROGRESS_KEY);
+      const progress = raw ? JSON.parse(raw) : {};
+      const safeProgress = progress && typeof progress === "object" ? progress : {};
+
+      REQUIRED_GAME_IDS.forEach((gameId) => {
+        safeProgress[gameId] = false;
+      });
+
+      window.localStorage.setItem(GAME_PROGRESS_KEY, JSON.stringify(safeProgress));
+    } catch {
+      const resetProgress = REQUIRED_GAME_IDS.reduce((acc, gameId) => {
+        acc[gameId] = false;
+        return acc;
+      }, {});
+      window.localStorage.setItem(GAME_PROGRESS_KEY, JSON.stringify(resetProgress));
+    }
+
+    window.dispatchEvent(new Event(GAME_PROGRESS_EVENT));
+  };
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-black text-white">
       <HyperspaceBackground boosted={allFixesComplete} />
 
       {allFixesComplete ? (
-        <div className="absolute left-1/2 top-4 z-50 -translate-x-1/2 rounded-full border border-emerald-200/70 bg-emerald-900/45 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.26em] text-emerald-100">
-          fixes done, ship is now at 100% performance
+        <div className="absolute left-1/2 top-4 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border border-emerald-200/70 bg-emerald-900/45 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-100">
+          <span>fixes done, ship is now at 100% performance</span>
+          <button
+            type="button"
+            onClick={handleResetShipProgress}
+            className="rounded-full border border-emerald-100/70 bg-emerald-100/15 px-3 py-1 text-[9px] tracking-[0.16em] text-emerald-50 transition hover:bg-emerald-100/25"
+          >
+            Reset
+          </button>
         </div>
       ) : null}
 
       <button
         type="button"
         onClick={handleLogout}
-        className="absolute right-4 top-4 z-50 rounded-full border border-white/20 bg-black/60 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-white backdrop-blur-sm transition hover:bg-black"
+        className="absolute right-4 top-4 z-50 rounded-full border border-white/20 bg-black/60 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-white backdrop-blur-sm transition hover:bg-black"
       >
         Log Out
       </button>
@@ -176,7 +214,7 @@ export default function PlayerShipDashboard() {
       <button
         type="button"
         onClick={() => navigate('/playershipdashboard')}
-        className="absolute left-4 top-4 z-50 rounded-full border border-white/20 bg-black/60 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-white backdrop-blur-sm transition hover:bg-black"
+        className="absolute left-4 top-4 z-50 rounded-full border border-white/20 bg-black/60 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-white backdrop-blur-sm transition hover:bg-black"
         aria-label="Go back to home page"
       >
         Home
@@ -200,8 +238,16 @@ export default function PlayerShipDashboard() {
           </aside>
         ) : null}
 
-        <div className="absolute left-1/2 top-[60%] z-20 flex w-[min(92vw,980px)] -translate-x-1/2 -translate-y-1/2 flex-wrap items-center justify-center gap-4">
-          {challengeHitboxes.map((hitbox) => (
+        <div className="absolute left-1/2 top-[60%] z-20 flex w-[min(92vw,980px)] -translate-x-1/2 -translate-y-1/2 flex-nowrap items-center justify-center gap-3 overflow-x-auto px-2">
+          {challengeHitboxes.map((hitbox) => {
+            const isCompleted = gameProgress[hitbox.progressId] === true;
+            const hitboxClass = `inline-flex h-[42px] min-w-[165px] items-center justify-center whitespace-nowrap rounded-md border px-3 py-2 text-center text-[10px] font-semibold uppercase tracking-[0.1em] backdrop-blur-[1px] transition ${
+              isCompleted
+                ? "border-emerald-200/80 bg-emerald-900/30 text-emerald-100 shadow-[0_0_18px_rgba(16,185,129,0.8)]"
+                : "border-cyan-200/70 bg-slate-900/25 text-cyan-100 shadow-[0_0_0_rgba(34,211,238,0)] hover:bg-slate-900/45 hover:shadow-[0_0_18px_rgba(34,211,238,0.55)]"
+            }`;
+
+            return (
             hitbox.route ? (
               <button
                 key={hitbox.id}
@@ -214,7 +260,7 @@ export default function PlayerShipDashboard() {
                   description: hitbox.description ?? "No description available.",
                 })}
                 onMouseLeave={() => setHoveredHitbox((current) => (current?.id === hitbox.id ? null : current))}
-                className="min-h-[56px] min-w-[220px] rounded-md border border-cyan-200/70 bg-slate-900/25 px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.12em] text-cyan-100 shadow-[0_0_0_rgba(34,211,238,0)] backdrop-blur-[1px] transition hover:bg-slate-900/45 hover:shadow-[0_0_18px_rgba(34,211,238,0.55)]"
+                className={hitboxClass}
                 aria-label={hitbox.title}
               >
                 {hitbox.title}
@@ -230,13 +276,14 @@ export default function PlayerShipDashboard() {
                   description: hitbox.description ?? "No description available.",
                 })}
                 onMouseLeave={() => setHoveredHitbox((current) => (current?.id === hitbox.id ? null : current))}
-                className="inline-flex min-h-[56px] min-w-[220px] items-center justify-center rounded-md border border-cyan-200/70 bg-slate-900/25 px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.12em] text-cyan-100 shadow-[0_0_0_rgba(34,211,238,0)] backdrop-blur-[1px] transition hover:bg-slate-900/45 hover:shadow-[0_0_18px_rgba(34,211,238,0.55)]"
+                className={hitboxClass}
                 aria-label={hitbox.title}
               >
                 {hitbox.title}
               </a>
             )
-          ))}
+          );
+          })}
         </div>
 
         <div className="relative mx-auto flex min-h-screen w-full max-w-[1440px] flex-col justify-between px-5 py-6 sm:px-8 lg:px-12">

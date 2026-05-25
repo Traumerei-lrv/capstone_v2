@@ -5,34 +5,152 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Galaxy Hops Challenge</title>
 <style>
-body{
-    margin:0;
-    height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    background:#0d1117;
-    color: #c9d1d9;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+@font-face {
+  font-family: "Pixellari";
+  src: url("./assets/fonts/Pixellari.ttf") format("truetype");
 }
-.challenge-container {
-    width: 600px;
-    padding: 2rem;
-    border: 1px solid #30363d;
-    border-radius: 6px;
-    background: #161b22;
+
+@font-face {
+  font-family: "VCR";
+  src: url("./assets/fonts/VCR_OSD_MONO_1.001.ttf") format("truetype");
 }
-h1 {
-    color: #f0f6fc;
-    border-bottom: 1px solid #30363d;
-    padding-bottom: 0.5rem;
+
+:root {
+  --panel-bg: #c8c8c8;
+  --ink: #141414;
+  --bevel-light: #f2f2f2;
+  --bevel-dark: #868686;
+}
+
+* {
+  box-sizing: border-box;
+  image-rendering: pixelated;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at 15% 20%, #243047 0, #0f1623 40%, #070b12 100%);
+  color: var(--ink);
+  font-family: "Pixellari", monospace;
+  display: grid;
+  place-items: center;
+  padding: 30px;
+}
+
+.app-shell {
+  width: min(1760px, 100%);
+  background: var(--panel-bg);
+  border: 4px solid #b0b0b0;
+  box-shadow: inset -3px -3px 0 var(--bevel-dark), inset 3px 3px 0 var(--bevel-light);
+  padding: clamp(18px, 2.6vw, 32px);
+  display: grid;
+  grid-template-columns: 1.32fr 0.95fr;
+  gap: 20px;
+}
+
+.game-pane,
+.info-pane {
+  background: #cbcbcb;
+  border: 3px solid #a2a2a2;
+  box-shadow: inset -2px -2px 0 #8f8f8f, inset 2px 2px 0 #ececec;
+  padding: 16px;
+  min-width: 0;
+}
+
+.pane-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  gap: 8px;
+}
+
+.pane-header h1 {
+  margin: 0;
+  font-family: "VCR", monospace;
+  font-size: clamp(17px, 2vw, 22px);
+  color: #175cbd;
+  letter-spacing: 0.05em;
+}
+
+.back-link {
+  border: 2px solid #7a7a7a;
+  background: #9d9d9d;
+  color: #111;
+  padding: 8px 10px;
+  text-decoration: none;
+  font-size: 12px;
+}
+
+.panel {
+  border: 2px solid #969696;
+  background: #d8d8d8;
+  padding: 8px;
+}
+
+.panel h2,
+.panel h3 {
+  margin: 0 0 6px;
+  font-family: "VCR", monospace;
+  font-size: 14px;
+  color: #174fa8;
+}
+
+.panel p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.placeholder-game {
+  min-height: 460px;
+  border: 3px solid #989898;
+  background: #bcbcbc;
+  box-shadow: inset -2px -2px 0 #737373, inset 2px 2px 0 #d5d5d5;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 16px;
+  font-family: "VCR", monospace;
+}
+
+.info-pane {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+@media (max-width: 1080px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
 </head>
 <body>
-<div class="challenge-container">
-    <h1>Galaxy Hops Challenge</h1>
-    <p>Challenge details to be added.</p>
-</div>
+  <main class="app-shell">
+    <section class="game-pane">
+      <header class="pane-header">
+        <h1>Galaxy Hop Planner</h1>
+        <a class="back-link" href="/playership">Back to Player Ship</a>
+      </header>
+      <div class="placeholder-game">
+        Galaxy Hop mission viewport
+      </div>
+    </section>
+
+    <aside class="info-pane">
+      <section class="panel">
+        <h2>DSA Mission Brief</h2>
+        <p>Plan a valid traversal route through connected galaxies.</p>
+      </section>
+
+      <section class="panel">
+        <h3>Status</h3>
+        <p>Challenge details to be added.</p>
+      </section>
+    </aside>
+  </main>
 </body>
 </html>

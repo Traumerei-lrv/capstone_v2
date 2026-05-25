@@ -32,14 +32,12 @@ class CargoScene extends Phaser.Scene {
     super("CargoScene");
     this.stack = [];
     this.maxSize = cargoNames.length;
-    this.stackX = 286;
-    this.slotBottomY = 472;
-    this.slotStep = 52;
+    this.stackX = 336;
+    this.slotBottomY = 700;
+    this.slotStep = 115;
     this.busy = false;
     this.targetOrder = [];
     this.targetPreview = [];
-    this.slotGuides = [];
-    this.targetSlotGuides = [];
     this.commandQueue = [];
     this.isRunningScript = false;
   }
@@ -77,17 +75,15 @@ class CargoScene extends Phaser.Scene {
       );
     }
 
-    this.chamber = this.add.rectangle(this.stackX, 298, 170, 410, 0x001f52, 0.45)
+    this.chamber = this.add.rectangle(this.stackX, 430, 300, 620, 0x001f52, 0.45)
       .setStrokeStyle(4, 0x89b2ff);
-    this.targetChamber = this.add.rectangle(548, 298, 170, 410, 0x001f52, 0.45)
+    this.targetChamber = this.add.rectangle(668, 430, 300, 620, 0x001f52, 0.45)
       .setStrokeStyle(4, 0x66d3ff, 0.8);
-    this.add.text(488, 100, "TARGET STACK", {
-      fontFamily: "monospace",
+    this.add.text(594, 128, "TARGET STACK", {
+      fontFamily: "Inter",
       fontSize: "13px",
       color: "#bce6ff"
     });
-
-    this.redrawSlotGuides();
 
     this.tractorBeam = this.add.rectangle(0, 150, 78, 260, 0x7bdfff, 0)
       .setOrigin(0.5, 0)
@@ -96,7 +92,7 @@ class CargoScene extends Phaser.Scene {
     this.scannerBeam = this.add.rectangle(0, 0, 92, 64, 0x00ffaa, 0).setVisible(false);
 
     this.topTag = this.add.text(0, 0, "TOP", {
-      fontFamily: "monospace",
+      fontFamily: "Inter",
       fontSize: "12px",
       color: "#ffffff",
       backgroundColor: "#003f88",
@@ -114,11 +110,11 @@ class CargoScene extends Phaser.Scene {
 
   createCrate(itemName, startX, startY) {
     const data = cargoTypes[itemName];
-    const crate = this.add.image(startX, startY, data.texture).setDisplaySize(122, 36);
+    const crate = this.add.image(startX, startY, data.texture).setDisplaySize(190, 44);
     this.physics.add.existing(crate);
 
     const label = this.add.text(startX, startY + 18, data.label, {
-      fontFamily: "monospace",
+      fontFamily: "Inter",
       fontSize: "10px",
       color: "#091523",
       backgroundColor: "#c8d8f4"
@@ -362,42 +358,6 @@ class CargoScene extends Phaser.Scene {
     this.cameras.main.shake(120, 0.0035);
   }
 
-  redrawSlotGuides() {
-    this.slotGuides.forEach((item) => item.destroy());
-    this.targetSlotGuides.forEach((item) => item.destroy());
-    this.slotGuides = [];
-    this.targetSlotGuides = [];
-
-    for (let idx = 0; idx < this.maxSize; idx += 1) {
-      const y = this.slotBottomY - idx * this.slotStep;
-
-      const playLine = this.add.line(this.stackX, y, -48, 0, 48, 0, 0x2e72d6, 0.8).setLineWidth(2);
-      const playText = this.add.text(this.stackX - 102, y - 9, `S${idx + 1}`, {
-        fontFamily: "monospace",
-        fontSize: "12px",
-        color: "#9fc5ff"
-      });
-      this.slotGuides.push(playLine, playText);
-
-      const targetLine = this.add.line(548, y, -48, 0, 48, 0, 0x66d3ff, 0.55).setLineWidth(2);
-      this.targetSlotGuides.push(targetLine);
-    }
-  }
-
-  expandStackLevel(fromScript = false) {
-    if (this.busy) {
-      this.updateStatus("Cargo arm busy. Wait for current operation.");
-      return false;
-    }
-
-    this.maxSize += 1;
-    this.redrawSlotGuides();
-    this.renderTargetPreview();
-    this.updateStatus(`Stack expanded. New max size: ${this.maxSize}`);
-    if (fromScript) this.runNextCommand();
-    return true;
-  }
-
   clearTargetPreview() {
     this.targetPreview.forEach((item) => {
       item.sprite.destroy();
@@ -412,7 +372,7 @@ class CargoScene extends Phaser.Scene {
     for (let i = 0; i < this.targetOrder.length; i += 1) {
       const itemName = this.targetOrder[i];
       const y = this.slotBottomY - i * this.slotStep;
-      const crateObj = this.createCrate(itemName, 548, y);
+      const crateObj = this.createCrate(itemName, 668, y);
       crateObj.sprite.setAlpha(0.8);
       crateObj.text.setAlpha(0.95);
       this.targetPreview.push(crateObj);
@@ -500,11 +460,6 @@ class CargoScene extends Phaser.Scene {
       return;
     }
 
-    if (op === "EXPAND") {
-      this.expandStackLevel(true);
-      return;
-    }
-
     this.updateStatus(`Unknown command ignored: ${cmd.raw}`);
     this.time.delayedCall(80, () => this.runNextCommand());
   }
@@ -512,8 +467,8 @@ class CargoScene extends Phaser.Scene {
 
 const config = {
   type: Phaser.AUTO,
-  width: 800,
-  height: 600,
+  width: 1100,
+  height: 840,
   parent: "game-container",
   backgroundColor: "#00173e",
   physics: {
@@ -550,9 +505,6 @@ document.getElementById("peekBtn").addEventListener("click", () => {
 document.getElementById("resetBtn").addEventListener("click", () => {
   getScene().resetStack();
 });
-document.getElementById("expandBtn").addEventListener("click", () => {
-  getScene().expandStackLevel();
-});
 
 function parseCommands(rawText) {
   const lines = rawText.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
@@ -561,7 +513,7 @@ function parseCommands(rawText) {
   for (const line of lines) {
     const upper = line.toUpperCase();
 
-    if (upper === "POP" || upper === "PEEK" || upper === "RESET" || upper === "EXPAND") {
+    if (upper === "POP" || upper === "PEEK" || upper === "RESET") {
       commands.push({ op: upper, raw: line });
       continue;
     }

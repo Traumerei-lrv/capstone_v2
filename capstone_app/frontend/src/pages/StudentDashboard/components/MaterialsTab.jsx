@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, CheckCircle, KeyRound, Loader2, Users } from 'lucide-react';
+import { BookOpen, CheckCircle, KeyRound, Loader2 } from 'lucide-react';
 import { fetchEnrolledClasses, joinClassByCode } from '../../../api/studentDashboard';
 
 const Card = ({ children, className = '' }) => <section className={`rounded-2xl border-2 border-blue-100 bg-white p-6 ${className}`}>{children}</section>;
@@ -73,16 +73,16 @@ export default function MaterialsTab() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-4xl font-black tracking-tight text-blue-900">Class Registry</h1>
-        <p className="mt-2 font-medium text-slate-500">Join a course with your instructor code, then open your class workspace.</p>
+        <h1 className="text-4xl font-black tracking-tight text-blue-900">Class Enrollment</h1>
+        <p className="mt-2 font-medium text-slate-500">Enter your class code to join a class and access class materials and activities.</p>
       </div>
 
       <Card>
         <div className="mb-4 flex items-center gap-2">
           <KeyRound className="h-5 w-5 text-blue-600" />
-          <h2 className="text-lg font-black uppercase tracking-tight text-blue-900">Join Via Class Code</h2>
+          <h2 className="text-lg font-black uppercase tracking-tight text-blue-900">Join a Class</h2>
         </div>
-        <p className="mb-4 text-xs font-medium text-slate-500">Use your instructor-provided course code from the class invitation.</p>
+        <p className="mb-4 text-xs font-medium text-slate-500">Use the class code provided by your instructor.</p>
         <div className="flex flex-col gap-3 sm:flex-row">
           <input
             type="text"
@@ -107,7 +107,7 @@ export default function MaterialsTab() {
       <Card>
         <div className="mb-4 flex items-center gap-2">
           <BookOpen className="h-5 w-5 text-blue-600" />
-          <h2 className="text-lg font-black uppercase tracking-tight text-blue-900">Joined Classes</h2>
+          <h2 className="text-lg font-black uppercase tracking-tight text-blue-900">My Classes</h2>
         </div>
         {loading ? (
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-500">
@@ -115,7 +115,7 @@ export default function MaterialsTab() {
             Loading classes...
           </div>
         ) : classes.length === 0 ? (
-          <p className="text-sm text-slate-500">No joined classes yet. Enter a valid class code to enroll.</p>
+          <p className="text-sm text-slate-500">You have not joined any classes yet. Enter a valid class code to enroll.</p>
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
             {classes.map((entry) => (
@@ -141,13 +141,6 @@ export default function MaterialsTab() {
         )}
       </Card>
 
-      <Card className="bg-blue-600 text-white border-blue-600">
-        <div className="flex items-center gap-2">
-          <Users className="h-5 w-5" />
-          <h2 className="text-lg font-black uppercase tracking-tight">Class Tip</h2>
-        </div>
-        <p className="mt-3 text-sm text-blue-100">Open a joined class card to view instructor materials and assigned tasks in one place.</p>
-      </Card>
     </div>
   );
 }

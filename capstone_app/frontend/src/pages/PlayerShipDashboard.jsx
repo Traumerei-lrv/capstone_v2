@@ -5,7 +5,7 @@ import LoadingScreen from "./LoadingScreen";
 import cockpitDashboard from "../assets/img/cockpit-dashboard.png";
 import btnAdventure from "../assets/img/btn_adventure-fullreso.png";
 import { clearDemoAuthSession } from "../demoAuth";
-
+ 
 const turbineFailurePage = new URL("../concept-main/assets/turbine/turbine_failure.html", import.meta.url).href;
 const rocketAvoidingPlanPage = new URL("../concept-main/assets/asteroids/index.html", import.meta.url).href;
 const cargoStackProtocolPage = new URL("../concept-main/assets/cargo/index.html", import.meta.url).href;
@@ -257,7 +257,7 @@ export default function PlayerShipDashboard() {
                 onMouseEnter={() => setHoveredHitbox({
                   id: hitbox.id,
                   title: hitbox.title,
-                  description: hitbox.description ?? "Mission briefing unavailable.",
+                  description: hitbox.description ?? "No description available.",
                 })}
                 onMouseLeave={() => setHoveredHitbox((current) => (current?.id === hitbox.id ? null : current))}
                 className={hitboxClass}
@@ -273,7 +273,7 @@ export default function PlayerShipDashboard() {
                 onMouseEnter={() => setHoveredHitbox({
                   id: hitbox.id,
                   title: hitbox.title,
-                  description: hitbox.description ?? "Mission briefing unavailable.",
+                  description: hitbox.description ?? "No description available.",
                 })}
                 onMouseLeave={() => setHoveredHitbox((current) => (current?.id === hitbox.id ? null : current))}
                 className={hitboxClass}

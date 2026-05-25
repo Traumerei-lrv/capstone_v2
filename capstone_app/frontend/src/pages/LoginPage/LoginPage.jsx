@@ -4,6 +4,7 @@ import googleIcon from '../../assets/ico/google_icon.png';
 // import PageTransition from '../../components/PageTransition';
 import { useLocation, useNavigate } from 'react-router-dom';
 import TypewriterEffect from '../../components/TypewriterEffect';
+import HyperSpaceHorizontal from '../../components/HyperSpaceHorizontal';
 import {
   DEMO_ADMIN_LOGIN,
   DEMO_INSTRUCTOR_LOGIN,
@@ -57,18 +58,14 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       if (isSignup) {
-        registerLocalUser({
+        const createdSession = registerLocalUser({
           firstName,
           lastName,
           email,
           password,
           role: 'student',
         });
-        const localSession = authenticateLocalUser(email, password);
-        if (!localSession) {
-          throw new Error('Unable to sign in after account creation.');
-        }
-        setDemoAuthSession(localSession);
+        setDemoAuthSession(createdSession);
         setMessage('Account created successfully.');
         authSucceeded = true;
       } else {
@@ -106,26 +103,34 @@ export default function LoginPage() {
           }}
         />
       )} */}
-      <main className="min-h-screen flex flex-wrap items-center justify-center gap-0 p-0 bg-cover bg-center" style={{backgroundImage: 'linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.12)), url(../../assets/bg/bg_main.png)'}}>
+      <div className="relative min-h-screen overflow-hidden bg-black">
+      <HyperSpaceHorizontal />
+      <div className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.14),transparent_30%),linear-gradient(180deg,rgba(11,24,47,0.48),rgba(11,24,47,0.34))]" />
+      <main className="relative z-10 min-h-screen flex flex-wrap items-center justify-center gap-0 p-0">
         {/* Logo Section */}
         <div className="hidden md:flex flex-[0_0_54%] max-w-[54%] h-screen items-center justify-center p-6">
-        <img className="w-full max-w-[560px] h-auto object-contain" style={{filter: 'drop-shadow(0 14px 22px rgba(23, 72, 140, 0.18))'}} src={logo} alt="Balangkas logo" />
+        <img
+          className="w-full max-w-[560px] h-auto object-contain"
+          style={{ filter: 'drop-shadow(0 14px 22px rgba(23, 72, 140, 0.18)) drop-shadow(0 0 16px rgba(110, 178, 255, 0.24))' }}
+          src={logo}
+          alt="Balangkas logo"
+        />
       </div>
 
       {/* Form Section */}
-      <section className="flex-[0_0_100%] md:flex-[0_0_46%] md:max-w-[46%] w-full md:w-[46%] min-h-[92vh] flex overflow-hidden rounded-[24px] md:rounded-l-[28px] md:rounded-r-[0]" style={{boxShadow: '-18px 24px 56px rgba(27, 76, 136, 0.16)', background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(255, 255, 255, 0.24)), url(../../assets/bg/login_form_bg.png)', backdropFilter: 'blur(18px)', borderLeft: '1px solid rgba(255, 255, 255, 0.42)'}}>
+      <section className="flex-[0_0_100%] md:flex-[0_0_46%] md:max-w-[46%] w-full md:w-[46%] min-h-[92vh] flex overflow-hidden rounded-[24px] md:rounded-l-[28px] md:rounded-r-[0]" style={{boxShadow: '-18px 24px 56px rgba(27, 76, 136, 0.2)', background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(255, 255, 255, 0.64))', backdropFilter: 'blur(18px)', borderLeft: '1px solid rgba(255, 255, 255, 0.56)'}}>
         <div className="relative flex items-center justify-center flex-1 p-6 md:p-11">
           <div className="relative z-10 w-full max-w-[420px] p-6 md:p-0">
             <form className="grid gap-[22px]" onSubmit={handleAuth}>
               <TypewriterEffect
               text={isSignup ? "Create your account" : "Welcome back"}
               speed={60}
-              className="text-[#12385f] text-xl font-semibold mb-2 block"
+              className="text-[#0b2f55] text-xl font-bold mb-2 block"
               />
               {isSignup ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <label className="grid gap-[14px]">
-                    <span className="text-base font-normal text-gray-600">First Name</span>
+                    <span className="text-base font-medium text-slate-700">First Name</span>
                     <input
                       type="text"
                       name="firstName"
@@ -134,12 +139,12 @@ export default function LoginPage() {
                       value={firstName}
                       onChange={(event) => setFirstName(event.target.value)}
                       required={isSignup}
-                      className="w-full border-0 border-b border-[rgba(34,122,224,0.82)] rounded-none p-3 pb-[14px] bg-transparent text-[#12385f] outline-none transition-all focus:border-b-[#0f6ed9] focus:shadow-[0_1px_0_0_rgba(15,110,217,0.28)]"
+                      className="w-full border-0 border-b-2 border-[rgba(34,122,224,0.95)] rounded-none p-3 pb-[14px] bg-transparent text-[#0f345a] outline-none transition-all focus:border-b-[#0f6ed9] focus:shadow-[0_1px_0_0_rgba(15,110,217,0.36)]"
                     />
                   </label>
 
                   <label className="grid gap-[14px]">
-                    <span className="text-base font-normal text-gray-600">Last Name</span>
+                    <span className="text-base font-medium text-slate-700">Last Name</span>
                     <input
                       type="text"
                       name="lastName"
@@ -148,14 +153,14 @@ export default function LoginPage() {
                       value={lastName}
                       onChange={(event) => setLastName(event.target.value)}
                       required={isSignup}
-                      className="w-full border-0 border-b border-[rgba(34,122,224,0.82)] rounded-none p-3 pb-[14px] bg-transparent text-[#12385f] outline-none transition-all focus:border-b-[#0f6ed9] focus:shadow-[0_1px_0_0_rgba(15,110,217,0.28)]"
+                      className="w-full border-0 border-b-2 border-[rgba(34,122,224,0.95)] rounded-none p-3 pb-[14px] bg-transparent text-[#0f345a] outline-none transition-all focus:border-b-[#0f6ed9] focus:shadow-[0_1px_0_0_rgba(15,110,217,0.36)]"
                     />
                   </label>
                 </div>
               ) : null}
 
               <label className="grid gap-[14px]">
-                <span className="text-base font-normal text-gray-600">Email</span>
+                <span className="text-base font-medium text-slate-700">Email</span>
                 <input
                   type="email"
                   name="email"
@@ -164,12 +169,12 @@ export default function LoginPage() {
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   required
-                  className="w-full border-0 border-b border-[rgba(34,122,224,0.82)] rounded-none p-3 pb-[14px] bg-transparent text-[#12385f] outline-none transition-all focus:border-b-[#0f6ed9] focus:shadow-[0_1px_0_0_rgba(15,110,217,0.28)]"
+                  className="w-full border-0 border-b-2 border-[rgba(34,122,224,0.95)] rounded-none p-3 pb-[14px] bg-transparent text-[#0f345a] outline-none transition-all focus:border-b-[#0f6ed9] focus:shadow-[0_1px_0_0_rgba(15,110,217,0.36)]"
                 />
               </label>
 
               <label className="grid gap-[14px]">
-                <span className="text-base font-normal text-gray-600">Password</span>
+                <span className="text-base font-medium text-slate-700">Password</span>
                 <input
                   type={isSignup && showSignupPasswords ? 'text' : 'password'}
                   name="password"
@@ -178,14 +183,14 @@ export default function LoginPage() {
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   required
-                  className="w-full border-0 border-b border-[rgba(34,122,224,0.82)] rounded-none p-3 pb-[14px] bg-transparent text-[#12385f] outline-none transition-all focus:border-b-[#0f6ed9] focus:shadow-[0_1px_0_0_rgba(15,110,217,0.28)]"
+                  className="w-full border-0 border-b-2 border-[rgba(34,122,224,0.95)] rounded-none p-3 pb-[14px] bg-transparent text-[#0f345a] outline-none transition-all focus:border-b-[#0f6ed9] focus:shadow-[0_1px_0_0_rgba(15,110,217,0.36)]"
                 />
               </label>
 
               {isSignup ? (
                 <>
                   <label className="grid gap-[14px]">
-                    <span className="text-base font-normal text-gray-600">Confirm Password</span>
+                    <span className="text-base font-medium text-slate-700">Confirm Password</span>
                     <input
                       type={showSignupPasswords ? 'text' : 'password'}
                       name="confirmPassword"
@@ -194,7 +199,7 @@ export default function LoginPage() {
                       value={confirmPassword}
                       onChange={(event) => setConfirmPassword(event.target.value)}
                       required={isSignup}
-                      className="w-full border-0 border-b border-[rgba(34,122,224,0.82)] rounded-none p-3 pb-[14px] bg-transparent text-[#12385f] outline-none transition-all focus:border-b-[#0f6ed9] focus:shadow-[0_1px_0_0_rgba(15,110,217,0.28)]"
+                      className="w-full border-0 border-b-2 border-[rgba(34,122,224,0.95)] rounded-none p-3 pb-[14px] bg-transparent text-[#0f345a] outline-none transition-all focus:border-b-[#0f6ed9] focus:shadow-[0_1px_0_0_rgba(15,110,217,0.36)]"
                     />
                   </label>
 
@@ -206,7 +211,7 @@ export default function LoginPage() {
                       onChange={(event) => setShowSignupPasswords(event.target.checked)}
                       className="w-4 h-4 accent-[#2d79d8]"
                     />
-                    <span className="text-[0.95rem] text-gray-400">Show passwords</span>
+                    <span className="text-[0.95rem] text-slate-600">Show passwords</span>
                   </label>
                 </>
               ) : null}
@@ -230,7 +235,7 @@ export default function LoginPage() {
               </button>
 
               {!isSignup ? (
-                <p className="text-center text-xs uppercase tracking-[0.24em] text-gray-500">
+                <p className="text-center text-xs uppercase tracking-[0.24em] text-slate-600">
                   Demo student: {DEMO_STUDENT_LOGIN.email} / {DEMO_STUDENT_LOGIN.password}
                   <br />
                   Demo instructor: {DEMO_INSTRUCTOR_LOGIN.email} / {DEMO_INSTRUCTOR_LOGIN.password}
@@ -242,7 +247,7 @@ export default function LoginPage() {
               {error ? <p className="mt-[-6px] text-center text-[0.95rem] text-[#b42318]">{error}</p> : null}
               {message ? <p className="mt-[-6px] text-center text-[0.95rem] text-[#1f7a3f]">{message}</p> : null}
 
-              <p className="mt-2.5 text-center text-gray-500">
+              <p className="mt-2.5 text-center text-slate-600">
                 {isSignup ? 'Already have an account?' : 'Don\'t have an account?'}{' '}
                 <button
                   type="button"
@@ -266,6 +271,7 @@ export default function LoginPage() {
         </div>
       </section>
     </main>
+    </div>
     </>
   );
 }

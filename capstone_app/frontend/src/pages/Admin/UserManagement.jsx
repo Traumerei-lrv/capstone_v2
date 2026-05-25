@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchAdminUsers, updateUserRole, upsertCourseEnrollment, upsertSectionEnrollment } from "../../api/adminDashboard";
+import { getLocalUsers, registerLocalUser } from "../../demoAuth";
 
 const roleOptions = ["student", "instructor", "admin"];
 
@@ -20,9 +21,24 @@ function SectionCard({ title, subtitle, children }) {
 export default function UserManagement() {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [payload, setPayload] = useState(null);
   const [busyAction, setBusyAction] = useState("");
   const [selectedRole, setSelectedRole] = useState({});
+  const [localAccounts, setLocalAccounts] = useState([]);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newUser, setNewUser] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    role: "student",
+  });
+
+  const loadLocalAccounts = () => {
+    const localUsers = getLocalUsers();
+    setLocalAccounts(localUsers);
+  };
 
   const loadUsers = async () => {
     setLoading(true);
@@ -46,6 +62,7 @@ export default function UserManagement() {
 
   useEffect(() => {
     loadUsers();
+    loadLocalAccounts();
   }, []);
 
   const courses = payload?.courses || [];
@@ -93,6 +110,57 @@ export default function UserManagement() {
     }
   };
 
+  const handleCreateUser = async (event) => {
+    event.preventDefault();
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    const firstName = newUser.firstName.trim();
+    const lastName = newUser.lastName.trim();
+    const email = newUser.email.trim().toLowerCase();
+    const password = newUser.password;
+
+    if (!firstName || !lastName) {
+      setErrorMessage("First name and last name are required.");
+      return;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setErrorMessage("Please enter a valid email.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setErrorMessage("Password must be at least 8 characters.");
+      return;
+    }
+
+    try {
+      setBusyAction("create-user");
+      registerLocalUser({
+        firstName,
+        lastName,
+        email,
+        password,
+        role: newUser.role,
+      });
+      setSuccessMessage(`User created: ${email}`);
+      setShowCreateForm(false);
+      setNewUser({
+        firstName: "",
+        lastName: "",
+        email: "",
+        password: "",
+        role: "student",
+      });
+      loadLocalAccounts();
+    } catch (error) {
+      setErrorMessage(error.message || "Failed to create user.");
+    } finally {
+      setBusyAction("");
+    }
+  };
+
   if (loading) {
     return <div className="p-5 text-sm text-slate-500">Loading users...</div>;
   }
@@ -100,6 +168,7 @@ export default function UserManagement() {
   return (
     <div className="space-y-5 p-4 sm:p-5">
       {errorMessage ? <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{errorMessage}</p> : null}
+      {successMessage ? <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{successMessage}</p> : null}
 
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
@@ -115,6 +184,92 @@ export default function UserManagement() {
           <p className="mt-2 text-3xl font-black text-[#165A9E]">{enrollmentSummary.sectionCount}</p>
         </div>
       </div>
+
+      <SectionCard title="Create User" subtitle="Create a new account for local role-based login">
+        {!showCreateForm ? (
+          <button
+            type="button"
+            onClick={() => {
+              setErrorMessage("");
+              setSuccessMessage("");
+              setShowCreateForm(true);
+            }}
+            className="rounded-lg bg-[#165A9E] px-4 py-2 text-xs font-semibold text-white"
+          >
+            Create User
+          </button>
+        ) : (
+          <form onSubmit={handleCreateUser} className="grid gap-3 md:grid-cols-6">
+            <input
+              type="text"
+              placeholder="First name"
+              value={newUser.firstName}
+              onChange={(event) => setNewUser((prev) => ({ ...prev, firstName: event.target.value }))}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 md:col-span-1"
+              required
+            />
+            <input
+              type="text"
+              placeholder="Last name"
+              value={newUser.lastName}
+              onChange={(event) => setNewUser((prev) => ({ ...prev, lastName: event.target.value }))}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 md:col-span-1"
+              required
+            />
+            <input
+              type="email"
+              placeholder="Email"
+              value={newUser.email}
+              onChange={(event) => setNewUser((prev) => ({ ...prev, email: event.target.value }))}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 md:col-span-2"
+              required
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={newUser.password}
+              onChange={(event) => setNewUser((prev) => ({ ...prev, password: event.target.value }))}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 md:col-span-1"
+              minLength={8}
+              required
+            />
+            <div className="flex gap-2 md:col-span-1">
+              <select
+                value={newUser.role}
+                onChange={(event) => setNewUser((prev) => ({ ...prev, role: event.target.value }))}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700"
+              >
+                {roleOptions.map((role) => (
+                  <option key={role} value={role}>
+                    {role}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-wrap gap-2 md:col-span-6">
+              <button
+                type="submit"
+                disabled={busyAction === "create-user"}
+                className="rounded-lg bg-[#165A9E] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
+              >
+                {busyAction === "create-user" ? "Creating..." : "Create User"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCreateForm(false)}
+                className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
+
+        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Local Accounts</p>
+          <p className="mt-1 text-sm text-slate-700">{localAccounts.length} created account(s)</p>
+        </div>
+      </SectionCard>
 
       <SectionCard title="User Management" subtitle="Role selector, deactivate toggle, and assignment controls">
         <div className="overflow-x-auto rounded-2xl border border-slate-200">

@@ -279,18 +279,20 @@ export default function ProfileTab({ onLogout, user }) {
         </div>
       ) : null}
 
-      <Card>
-        <div className="mb-6">
-          <h2 className="text-2xl font-black tracking-tight text-blue-900">Badge Cabinet</h2>
-          <p className="mt-1 text-sm font-medium text-slate-500">Unlocked recognitions and next targets.</p>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Badge icon={CheckCircle} title="First Login" detail="Entered mission control." />
-          <Badge icon={Trophy} title="Mission Starter" detail="Completed a learning mission." />
-          <Badge icon={Flame} title="Hot Streak" detail="Kept a 7-day activity streak." />
-          <Badge icon={Shield} title="Queue Cadet" detail="Unlock by finishing queue drills." locked />
-        </div>
-      </Card>
+      {role === 'student' ? (
+        <Card>
+          <div className="mb-6">
+            <h2 className="text-2xl font-black tracking-tight text-blue-900">Badge Cabinet</h2>
+            <p className="mt-1 text-sm font-medium text-slate-500">Unlocked recognitions and next targets.</p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Badge icon={CheckCircle} title="First Login" detail="Entered mission control." />
+            <Badge icon={Trophy} title="Mission Starter" detail="Completed a learning mission." />
+            <Badge icon={Flame} title="Hot Streak" detail="Kept a 7-day activity streak." />
+            <Badge icon={Shield} title="Queue Cadet" detail="Unlock by finishing queue drills." locked />
+          </div>
+        </Card>
+      ) : null}
     </div>
   );
 }

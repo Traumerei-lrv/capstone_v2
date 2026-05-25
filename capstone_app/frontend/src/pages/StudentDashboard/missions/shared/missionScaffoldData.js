@@ -54,9 +54,41 @@ export const missionScaffolds = {
     },
     postTest: {
       title: 'Post-test',
-      prompt: 'After this introduction lesson, what should you understand clearly?',
-      choices: ['Data structures, ADT concepts, operations, and algorithms', 'Only one quiz question', 'Only the mission score', 'Only the navigation buttons'],
+      prompt: 'Which statement best describes a data structure?',
+      choices: ['A way to store and organize data efficiently', 'A screen layout style', 'A hardware component', 'A file extension'],
       correctIndex: 0,
+      questions: [
+        {
+          prompt: 'Which statement best describes a data structure?',
+          choices: ['A way to store and organize data efficiently', 'A screen layout style', 'A hardware component', 'A file extension'],
+          correctIndex: 0,
+          explanation: 'Data structures exist to organize and manage data efficiently.',
+        },
+        {
+          prompt: 'Which pair correctly matches data structure types?',
+          choices: ['Linear: array, queue | Non-linear: tree, graph', 'Linear: tree, graph | Non-linear: array, stack', 'Linear: heap, graph | Non-linear: queue, list', 'Linear: stack, tree | Non-linear: array, queue'],
+          correctIndex: 0,
+          explanation: 'Arrays and queues are linear; trees and graphs are non-linear.',
+        },
+        {
+          prompt: 'What is the main focus of an Abstract Data Type (ADT)?',
+          choices: ['What operations are allowed', 'The exact memory address', 'The UI design of the program', 'The file storage path'],
+          correctIndex: 0,
+          explanation: 'An ADT focuses on behavior and allowed operations, not low-level implementation details.',
+        },
+        {
+          prompt: 'Which is an example of an ADT operation?',
+          choices: ['Access', 'Compile', 'Deploy', 'Render'],
+          correctIndex: 0,
+          explanation: 'Common ADT operations include initialize, add, access, and remove.',
+        },
+        {
+          prompt: 'Which statement best defines an algorithm?',
+          choices: ['A step-by-step method to solve a problem', 'A random guess process', 'A fixed data container', 'A styling rule'],
+          correctIndex: 0,
+          explanation: 'Algorithms solve problems through clear, ordered steps.',
+        },
+      ],
     },
     introPoints: [
       'Data structures store and organize data.',
@@ -225,9 +257,41 @@ export const missionScaffolds = {
     },
     postTest: {
       title: 'Post-test',
-      prompt: 'After this lesson, what should a review of recursion focus on?',
-      choices: ['Introduction and visualization', 'Only the first question', 'Only the progress bar', 'Only the reward card'],
+      prompt: 'What must a recursive function always include?',
+      choices: ['A base case', 'A database query', 'A UI button', 'A CSS class'],
       correctIndex: 0,
+      questions: [
+        {
+          prompt: 'What must a recursive function always include?',
+          choices: ['A base case', 'A database query', 'A UI button', 'A CSS class'],
+          correctIndex: 0,
+          explanation: 'The base case stops recursion and prevents infinite calls.',
+        },
+        {
+          prompt: 'What is the primary role of the base case?',
+          choices: ['Stop recursive calls when a condition is met', 'Start another recursive branch', 'Store all input values', 'Display output formatting'],
+          correctIndex: 0,
+          explanation: 'The base case is the stopping condition of the recursive process.',
+        },
+        {
+          prompt: 'Which sequence correctly reflects recursion flow?',
+          choices: ['Check base case -> change state -> recursive call', 'Recursive call -> output -> database save', 'Loop reset -> recursive call -> random return', 'Render UI -> call API -> recursive call'],
+          correctIndex: 0,
+          explanation: 'Good recursion checks stopping logic, moves state, then calls itself.',
+        },
+        {
+          prompt: 'How is recursion different from iteration?',
+          choices: ['Recursion uses self-calls; iteration uses loops', 'Recursion never stops; iteration always fails', 'Recursion uses no memory; iteration uses extra stack', 'Recursion cannot solve repeated tasks'],
+          correctIndex: 0,
+          explanation: 'Recursion repeats through function calls, while iteration repeats through loop constructs.',
+        },
+        {
+          prompt: 'What can happen if recursion has no valid base case?',
+          choices: ['It may continue until stack overflow', 'It converts automatically to a queue', 'It always returns zero', 'It skips all function calls'],
+          correctIndex: 0,
+          explanation: 'Without a reachable base case, recursive calls keep stacking and may overflow.',
+        },
+      ],
     },
     introPoints: [
       'Recursion is when a function calls itself to solve a problem.',

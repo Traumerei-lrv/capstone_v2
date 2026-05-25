@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, BookOpen, ClipboardList, FileText, FolderOpen, Plus, Upload, UserPlus, Users, X } from 'lucide-react';
+import useAuth from '../../hooks/useAuth';
 
 const STORAGE_KEY = 'balangkas_instructor_classes_v1';
 
@@ -137,6 +138,8 @@ const initialClasses = [
     name: 'DSA Fundamentals',
     section: 'A-12',
     code: 'Q8M4TZ',
+    instructor_id: 'instructor@balangkas.local',
+    instructor_name: 'Ben Piñon',
     members: [
       { id: 'STU-1', name: 'Maria Santos', status: 'Joined' },
       { id: 'STU-2', name: 'Juan Dela Cruz', status: 'Joined' },
@@ -738,6 +741,7 @@ function ClassDetail({
 export default function ClassManagement() {
   const navigate = useNavigate();
   const { classId } = useParams();
+  const { user } = useAuth();
 
   const [className, setClassName] = useState('');
   const [section, setSection] = useState('');
@@ -769,6 +773,8 @@ export default function ClassManagement() {
       name: className.trim(),
       section: section.trim(),
       code,
+      instructor_id: user?.email || 'instructor@balangkas.local',
+      instructor_name: user?.profile?.full_name || 'Instructor',
       members: [],
       materials: [],
       activities: [],

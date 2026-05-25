@@ -17,6 +17,7 @@ import InstructorLayout from './pages/Instructor/InstructorLayout';
 import InstructorDashboard from './pages/Instructor/InstructorDashboard';
 import ClassManagement from './pages/Instructor/ClassManagement';
 import InstructorProfile from './pages/Instructor/InstructorProfile';
+import InstructorMessages from './pages/Instructor/InstructorMessages';
 import AdminLayout from './pages/Admin/AdminLayout';
 import UserManagement from './pages/Admin/UserManagement';
 import CoursesSections from './pages/Admin/CoursesSections';
@@ -122,6 +123,7 @@ export default function App() {
             <Route index element={<InstructorDashboard />} />
             <Route path="class-management" element={<ClassManagement />} />
             <Route path="class-management/:classId" element={<ClassManagement />} />
+            <Route path="messages" element={<InstructorMessages />} />
             <Route path="profile" element={<InstructorProfile />} />
           </Route>
         </Route>

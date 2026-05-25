@@ -18,9 +18,11 @@ import MaterialsTab from './components/MaterialsTab';
 import AchievementsTab from './components/AchievementsTab';
 import PerformanceTab from './components/PerformanceTab';
 import ProfileTab from './components/ProfileTab';
+import MessagesTab from './components/MessagesTab';
 import { clearDemoAuthSession } from '../../demoAuth';
 import useAuth from '../../hooks/useAuth';
 import maskot from '../../assets/img/maskot.png';
+import { fetchUnreadMessageCountForCurrentUser, subscribeToMessages } from '../../api/messages';
 
 /**
  * BALANGKAS STUDENT DASHBOARD - REACT COMPONENT
@@ -352,7 +354,7 @@ const toDateLabel = (value) => {
   });
 };
 
-const Header = ({ selectedTab, setSelectedTab }) => (
+const Header = ({ selectedTab, setSelectedTab, messagesUnreadCount }) => (
   <header className="bg-[#5089c6] border-b-2 border-blue-700 sticky top-0 z-50">
     <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
       <div className="flex items-center">
@@ -386,6 +388,18 @@ const Header = ({ selectedTab, setSelectedTab }) => (
           >
             Achievements
           </button>
+          <button
+            type="button"
+            onClick={() => setSelectedTab('messages')}
+            className={`relative pb-1 text-sm uppercase tracking-wide transition-colors ${selectedTab === 'messages' ? 'text-white font-bold border-b-2 border-white' : 'text-blue-100 font-medium hover:text-white'}`}
+          >
+            Messages
+            {messagesUnreadCount > 0 ? (
+              <span className="absolute -right-4 -top-1 rounded-full bg-orange-500 px-1.5 py-0.5 text-[9px] font-black text-white">
+                {messagesUnreadCount}
+              </span>
+            ) : null}
+          </button>
         </nav>
       </div>
       <div className="flex items-center gap-4 text-white">
@@ -415,6 +429,7 @@ const Dashboard = () => {
   const [materialFilter, setMaterialFilter] = useState('All');
   const [bonusXp, setBonusXp] = useState(0);
   const [scoreboard, setScoreboard] = useState({});
+  const [messagesUnreadCount, setMessagesUnreadCount] = useState(0);
 
   useEffect(() => {
     const loadBonusXp = () => {
@@ -468,6 +483,33 @@ const Dashboard = () => {
       window.removeEventListener('storage', loadScoreboard);
       window.removeEventListener('focus', loadScoreboard);
       window.removeEventListener('balangkas:scoreboard-updated', handleScoreboardUpdated);
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadUnreadCount = async () => {
+      try {
+        const count = await fetchUnreadMessageCountForCurrentUser('student');
+        if (active) {
+          setMessagesUnreadCount(Number(count || 0));
+        }
+      } catch {
+        if (active) {
+          setMessagesUnreadCount(0);
+        }
+      }
+    };
+
+    loadUnreadCount();
+    const unsub = subscribeToMessages(loadUnreadCount);
+    const intervalId = window.setInterval(loadUnreadCount, 15000);
+
+    return () => {
+      active = false;
+      unsub();
+      window.clearInterval(intervalId);
     };
   }, []);
 
@@ -549,6 +591,10 @@ const Dashboard = () => {
 
     if (selectedTab === 'profile') {
       return <ProfileTab onLogout={handleLogout} user={user} />;
+    }
+
+    if (selectedTab === 'messages') {
+      return <MessagesTab />;
     }
 
     return (
@@ -658,7 +704,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-[#f9f9ff] text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900">
-      <Header selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
+      <Header selectedTab={selectedTab} setSelectedTab={setSelectedTab} messagesUnreadCount={messagesUnreadCount} />
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         {renderActiveTab()}

@@ -1,21 +1,29 @@
+import { useEffect, useState } from 'react';
 import { Bell, User } from 'lucide-react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { fetchUnreadMessageCountForCurrentUser, subscribeToMessages } from '../../api/messages';
 
 const tabs = [
   { label: 'Home', to: '/instructor', end: true },
   { label: 'Class Management', to: '/instructor/class-management', end: false },
+  { label: 'Messages', to: '/instructor/messages', end: false },
 ];
 
-function TabLink({ tab }) {
+function TabLink({ tab, unreadCount }) {
   return (
     <NavLink
       to={tab.to}
       end={tab.end}
-      className={({ isActive }) => `pb-1 text-sm font-semibold uppercase tracking-wider transition-colors ${
+      className={({ isActive }) => `relative pb-1 text-sm font-semibold uppercase tracking-wider transition-colors ${
         isActive ? 'text-white font-bold border-b-2 border-white' : 'text-blue-100 font-medium hover:text-white'
       }`}
     >
       {tab.label}
+      {tab.label === 'Messages' && unreadCount > 0 ? (
+        <span className="absolute -right-4 -top-1 rounded-full bg-orange-500 px-1.5 py-0.5 text-[9px] font-black text-white">
+          {unreadCount}
+        </span>
+      ) : null}
     </NavLink>
   );
 }
@@ -23,6 +31,34 @@ function TabLink({ tab }) {
 export default function InstructorLayout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadUnread = async () => {
+      try {
+        const count = await fetchUnreadMessageCountForCurrentUser('instructor');
+        if (active) {
+          setUnreadCount(Number(count || 0));
+        }
+      } catch {
+        if (active) {
+          setUnreadCount(0);
+        }
+      }
+    };
+
+    loadUnread();
+    const unsub = subscribeToMessages(loadUnread);
+    const intervalId = window.setInterval(loadUnread, 15000);
+
+    return () => {
+      active = false;
+      unsub();
+      window.clearInterval(intervalId);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#f9f9ff] text-slate-900">
@@ -31,7 +67,7 @@ export default function InstructorLayout() {
           <div className="flex items-center">
             <nav className="hidden md:flex items-center gap-6">
               {tabs.map((tab) => (
-                <TabLink key={tab.label} tab={tab} />
+                <TabLink key={tab.label} tab={tab} unreadCount={unreadCount} />
               ))}
             </nav>
           </div>

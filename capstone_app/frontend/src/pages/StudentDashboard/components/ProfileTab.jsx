@@ -201,7 +201,6 @@ export default function ProfileTab({ onLogout, user }) {
       {role === 'student' ? (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <ProfileMetric icon={Trophy} label="Level" value="5" tone="bg-blue-100 text-blue-600" />
-          <ProfileMetric icon={Coins} label="Coins" value="4,500" tone="bg-orange-100 text-orange-600" />
           <ProfileMetric icon={Flame} label="Streak" value="7 days" tone="bg-red-100 text-red-600" />
           <ProfileMetric icon={Award} label="Badges" value="12" tone="bg-emerald-100 text-emerald-600" />
         </div>

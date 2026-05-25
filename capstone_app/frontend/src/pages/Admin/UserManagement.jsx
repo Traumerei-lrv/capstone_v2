@@ -170,22 +170,18 @@ export default function UserManagement() {
       {errorMessage ? <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{errorMessage}</p> : null}
       {successMessage ? <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{successMessage}</p> : null}
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Users</p>
           <p className="mt-2 text-3xl font-black text-[#165A9E]">{payload?.users?.length || 0}</p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Course Enrollments</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Availble class</p>
           <p className="mt-2 text-3xl font-black text-[#165A9E]">{enrollmentSummary.courseCount}</p>
-        </div>
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Section Enrollments</p>
-          <p className="mt-2 text-3xl font-black text-[#165A9E]">{enrollmentSummary.sectionCount}</p>
         </div>
       </div>
 
-      <SectionCard title="Create User" subtitle="Create a new account for local role-based login">
+      <SectionCard title="Create User">
         {!showCreateForm ? (
           <button
             type="button"

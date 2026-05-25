@@ -4,13 +4,15 @@ export const missionScaffolds = {
     missionId: 'introduction',
     title: 'Introduction to DSA',
     subtitle: 'Foundation lesson',
-    description: 'Build your core understanding of data structures, ADT concepts, and algorithms.',
+    description:
+      'This introduction covers the core building blocks needed before deeper DSA topics. You will learn what data structures are, how algorithms work, and why ADTs help organize operations on data.',
     accent: '#0ea5e9',
     gradient: 'from-[#0ea5e9] via-[#2563eb] to-[#7c3aed]',
     stageLabel: 'Introduction Mission',
     rewardLabel: 'DSA Starter Pack',
     hint: 'Focus on key terms and how each concept connects to real program behavior.',
-    introBlurb: 'This introduction covers the core building blocks needed before deeper DSA topics.',
+    introBlurb:
+      'This introduction covers the core building blocks needed before deeper DSA topics. You will learn what data structures are, how algorithms work, and why ADTs help organize operations on data.',
     reviewBlurb: 'Review each subtopic and make sure you can explain the purpose of data structures, ADT, and algorithms.',
     preTest: {
       title: 'Pre-test',
@@ -63,41 +65,99 @@ export const missionScaffolds = {
     ],
     introSubtopics: [
       {
-        title: 'Subtopic 1: What is a Data Structure?',
-        terms: ['Data structure', 'Store', 'Organize', 'Data'],
-        explanation:
-          'A data structure is a special format used to store and organize data. It helps a program manage data properly so that the data can be added, accessed, updated, or removed when needed.',
-        simpleExplanation: 'Data structures are like containers. Each container has a different way of keeping data.',
+        title: 'What is a Data Structure?',
+        terms: ['Definition', 'Purpose', 'Example'],
+        explanation: 'A data structure is a way of storing and organizing data so it can be used efficiently.',
+        simpleExplanation: 'Data structures help programs arrange data in a useful format. They make it easier to add, access, update, and remove information.',
+        termDetails: {
+          Definition: 'A data structure is a special format used to store and organize data.',
+          Purpose: 'The purpose of a data structure is to help programs manage data efficiently.',
+          Example: 'A list of student names, a queue of customers, or a folder system can be represented using data structures.',
+        },
       },
       {
-        title: 'Subtopic 2: Linear and Non-linear Data Structures',
-        terms: ['Linear', 'Non-linear'],
-        explanation: 'This subtopic explains how some structures arrange data in sequence (linear) while others branch into multiple connections (non-linear).',
-        simpleExplanation: 'Linear is like a line. Non-linear is like branches.',
+        title: 'Types of Data Structures',
+        terms: ['Linear', 'Non-Linear'],
+        explanation: 'Data structures can be grouped based on how elements are stored and accessed.',
+        simpleExplanation: 'Linear data structures arrange elements in sequence, while non-linear data structures connect elements in a more complex way.',
+        termDetails: {
+          Linear: 'Linear data structures store or access elements in order. Examples include arrays, linked lists, stacks, and queues.',
+          'Non-Linear': 'Non-linear data structures are not arranged in a simple sequence. Examples include trees and graphs.',
+        },
       },
       {
-        title: 'Subtopic 3: What is an ADT?',
-        terms: ['ADT', 'Abstract Data Type'],
-        explanation: 'This subtopic introduces ADT as a concept that describes what operations are allowed, without forcing one specific implementation.',
-        simpleExplanation: 'ADT tells what a structure should do, not exactly how to code it.',
+        title: 'Abstract Data Type',
+        terms: ['Definition', 'Public Part', 'Private Part'],
+        explanation: 'An Abstract Data Type, or ADT, describes what data can do without focusing on how it is coded.',
+        simpleExplanation: 'ADT focuses on the behavior of data. It explains what operations are allowed while hiding the actual implementation.',
+        termDetails: {
+          Definition: 'An ADT is a logical description of how data is viewed and what operations are allowed.',
+          'Public Part': 'The public part shows the data and operations that users can access.',
+          'Private Part': 'The private part hides the internal representation and implementation.',
+        },
       },
       {
-        title: 'Subtopic 4: ADT Examples',
-        terms: ['List ADT', 'Stack ADT', 'Queue ADT'],
-        explanation: 'This subtopic presents common ADT examples used in programming and problem solving.',
-        simpleExplanation: 'Examples of ADT include List, Stack, and Queue.',
+        title: 'Benefits of ADT',
+        terms: ['Readable', 'Reusable', 'Changeable'],
+        explanation: 'ADTs make programs easier to understand, reuse, and update.',
+        simpleExplanation:
+          'Because ADTs separate the operation from the implementation, developers can change how data works internally without changing the whole program.',
+        termDetails: {
+          Readable: 'ADTs make code easier to understand because operations are clearly defined.',
+          Reusable: 'ADTs can be used again in future programs.',
+          Changeable: 'The implementation of an ADT can be changed without affecting the program that uses it.',
+        },
       },
       {
-        title: 'Subtopic 5: ADT Operations',
-        terms: ['Insert', 'Delete', 'Search', 'Traverse'],
-        explanation: 'This subtopic focuses on common operations that ADTs support when handling data.',
-        simpleExplanation: 'Operations are actions like add, remove, find, and visit data.',
+        title: 'ADT Operations',
+        terms: ['Initialize', 'Add', 'Access', 'Remove'],
+        explanation: 'This subtopic explains the basic actions that can be performed on an Abstract Data Type.',
+        simpleExplanation:
+          'ADT operations are actions used to prepare, add, access, and remove data. These operations describe what the data structure can do without showing how it is implemented.',
+        termDetails: {
+          Initialize: 'Initialize means preparing or creating the data structure before using it.',
+          Add: 'Add means placing a new item into the data structure.',
+          Access: 'Access means retrieving or viewing an item stored in the data structure.',
+          Remove: 'Remove means deleting an item from the data structure.',
+        },
       },
       {
-        title: 'Subtopic 6: What is an Algorithm?',
-        terms: ['Algorithm', 'Steps', 'Problem solving'],
-        explanation: 'This subtopic defines an algorithm as a finite sequence of steps used to solve a task or computational problem.',
-        simpleExplanation: 'An algorithm is a clear set of steps to solve something.',
+        title: 'Common ADTs',
+        terms: ['Stack', 'Queue', 'Tree', 'Graph'],
+        explanation: 'Different ADTs are used for different ways of organizing and processing data.',
+        simpleExplanation: 'Each ADT has its own behavior. Some follow order, some use hierarchy, and others use connections between data.',
+        termDetails: {
+          Stack: 'A stack follows Last-In, First-Out. The last item added is the first item removed.',
+          Queue: 'A queue follows First-In, First-Out. The first item added is the first item removed.',
+          Tree: 'A tree represents hierarchical data using parent and child relationships.',
+          Graph: 'A graph uses vertices and edges to show relationships between data.',
+        },
+      },
+      {
+        title: 'What is an Algorithm?',
+        terms: ['Definition', 'Steps', 'Example'],
+        explanation: 'An algorithm is a step-by-step set of instructions used to solve a problem.',
+        simpleExplanation:
+          'Algorithms guide how a task should be completed. A good algorithm has clear steps, accepts input, produces output, and eventually stops.',
+        termDetails: {
+          Definition: 'An algorithm is a step-by-step set of instructions executed in sequence to solve a problem.',
+          Steps: 'The steps of an algorithm must be clear and arranged in the correct order.',
+          Example: 'A sorting algorithm arranges numbers from lowest to highest by following a specific sequence of steps.',
+        },
+      },
+      {
+        title: 'Algorithm Characteristics',
+        terms: ['Finiteness', 'Definiteness', 'Input', 'Output', 'Uniqueness'],
+        explanation: 'A good algorithm must follow certain characteristics to work correctly.',
+        simpleExplanation:
+          'An algorithm should be clear, have valid input, produce output, stop after a number of steps, and make each step depend on the given data or previous result.',
+        termDetails: {
+          Finiteness: 'The algorithm must stop after a specified number of steps.',
+          Definiteness: 'Each instruction must be clear and unambiguous.',
+          Input: 'The algorithm may receive zero or more well-defined data before it begins.',
+          Output: 'The algorithm must produce one or more results.',
+          Uniqueness: 'The result of each step depends on the input or the result of the previous step.',
+        },
       },
     ],
     visualNodes: ['Data', 'Structure', 'Operation', 'Algorithm'],
@@ -176,7 +236,7 @@ export const missionScaffolds = {
     ],
     introSubtopics: [
       {
-        title: 'Subtopic 1: What is Recursion?',
+        title: 'What is Recursion?',
         terms: ['Recursion', 'Recursive function', 'Function calls itself'],
         explanation:
           'Recursion is a process where a function calls itself once or multiple times to solve a problem. Any function that calls itself is called a recursive function.',
@@ -185,7 +245,7 @@ export const missionScaffolds = {
           'A recursive function solves a problem by doing the same process again on a smaller or simpler version of the problem.',
       },
       {
-        title: 'Subtopic 2: Types of Recursive Calls',
+        title: 'Types of Recursive Calls',
         terms: ['Direct recursion', 'Indirect recursion', 'Infinite recursion'],
         explanation:
           'Direct recursion happens when a method directly calls itself. Indirect recursion happens when a method calls another method, and that method eventually calls the original method again. Infinite recursion happens when a recursive function fails to stop.',
@@ -195,7 +255,7 @@ export const missionScaffolds = {
           'A recursive process must have a way to stop. Without a stopping condition, the function may continue calling itself forever.',
       },
       {
-        title: 'Subtopic 3: Parts of a Recursive Algorithm',
+        title: 'Parts of a Recursive Algorithm',
         terms: ['Base case', 'Change of state', 'Recursive call'],
         explanation:
           'A recursive algorithm must have three important parts. First, it must have a base case, which is the condition that allows the recursion to stop. Second, it must change its state and move toward the base case. Third, it must call itself recursively.',
@@ -204,7 +264,7 @@ export const missionScaffolds = {
           'The base case prevents infinite recursion. The change of state moves the problem closer to that base case. The recursive call repeats the process.',
       },
       {
-        title: 'Subtopic 4: Recursion vs Iteration',
+        title: 'Recursion vs Iteration',
         terms: ['Recursion', 'Iteration', 'Looping', 'Base case', 'Condition', 'Stack overflow'],
         explanation:
           'Iteration is a process of repeating a set of instructions, also known as looping. Recursion stops when a base case is reached, while iteration stops when a condition becomes false. Each recursive call requires extra memory space, while iteration does not require extra memory space for repeated calls. Infinite recursion may cause stack overflow.',
@@ -213,7 +273,7 @@ export const missionScaffolds = {
           'Both recursion and iteration repeat actions, but they repeat in different ways. Recursion uses repeated function calls, while iteration uses loops.',
       },
       {
-        title: 'Subtopic 5: Types of Recursion',
+        title: 'Types of Recursion',
         terms: ['Linear recursion', 'Tail recursion', 'Binary recursion', 'Mutual recursion'],
         explanation:
           'Linear recursion happens when a function calls itself once each time it is invoked. Tail recursion happens when the recursive call is the last operation of the function. Binary recursion happens when the function calls itself twice. Mutual recursion happens when functions work in a pair or group by calling one another.',

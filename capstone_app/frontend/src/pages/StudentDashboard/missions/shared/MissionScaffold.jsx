@@ -3,7 +3,6 @@ import useAuth from '../../../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { recordMissionAttempt, upsertMissionProgress } from '../../../../api/studentDashboard';
 import { Trophy, MessageCircleQuestion, Sparkles, CheckCircle, XCircle } from 'lucide-react';
-import IntroductionDsaVisualization from './IntroductionDsaVisualization';
 import RecursionHanoiVisualization from './RecursionHanoiVisualization';
 
 const STAGES = [
@@ -165,6 +164,7 @@ export default function MissionScaffold({ mission }) {
   const [problemSubmitted, setProblemSubmitted] = useState(false);
   const [problemResult, setProblemResult] = useState(null);
   const [showProblemSuccessModal, setShowProblemSuccessModal] = useState(false);
+  const [selectedIntroTerm, setSelectedIntroTerm] = useState('');
   const [introConceptPlacements, setIntroConceptPlacements] = useState(() => getInitialIntroConceptPlacements());
   const [introConceptFeedback, setIntroConceptFeedback] = useState('');
   const [introConceptSolved, setIntroConceptSolved] = useState(false);
@@ -183,6 +183,9 @@ export default function MissionScaffold({ mission }) {
   const currentStage = STAGES[stageIndex];
   const hasIntroSubtopics = Array.isArray(mission.introSubtopics) && mission.introSubtopics.length > 0;
   const currentIntroSubtopic = hasIntroSubtopics ? mission.introSubtopics[introSubtopicIndex] : null;
+  const introTermDetails = currentIntroSubtopic && typeof currentIntroSubtopic.termDetails === 'object' ? currentIntroSubtopic.termDetails : null;
+  const activeIntroTerm = selectedIntroTerm || currentIntroSubtopic?.terms?.[0] || '';
+  const activeIntroDetail = introTermDetails && activeIntroTerm ? introTermDetails[activeIntroTerm] : '';
   const isRecursionMission = mission.key === 'recursion';
   const isIntroductionMission = mission.key === 'introduction';
   const allPreTestAnswered = preAnswers.every((answer) => answer !== null);
@@ -420,6 +423,21 @@ export default function MissionScaffold({ mission }) {
       setIntroSubtopicIndex(0);
     }
   }, [currentStage?.key]);
+
+  useEffect(() => {
+    if (currentStage?.key !== 'intro') {
+      setSelectedIntroTerm('');
+      return;
+    }
+
+    if (!hasIntroSubtopics) {
+      setSelectedIntroTerm('');
+      return;
+    }
+
+    const firstTerm = Array.isArray(currentIntroSubtopic?.terms) && currentIntroSubtopic.terms.length > 0 ? currentIntroSubtopic.terms[0] : '';
+    setSelectedIntroTerm(firstTerm);
+  }, [currentStage?.key, hasIntroSubtopics, introSubtopicIndex, currentIntroSubtopic]);
 
   function continueToProblem() {
     setStageIndex(2);
@@ -753,9 +771,16 @@ export default function MissionScaffold({ mission }) {
                         {Array.isArray(currentIntroSubtopic.terms) && currentIntroSubtopic.terms.length > 0 ? (
                           <div className="mt-3 flex flex-wrap gap-2">
                             {currentIntroSubtopic.terms.map((term) => (
-                              <span key={`${currentIntroSubtopic.title}-${term}`} className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                              <button
+                                key={`${currentIntroSubtopic.title}-${term}`}
+                                type="button"
+                                onClick={() => setSelectedIntroTerm(term)}
+                                className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                                  activeIntroTerm === term ? 'border-blue-500 bg-blue-600 text-white' : 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                                }`}
+                              >
                                 {term}
-                              </span>
+                              </button>
                             ))}
                           </div>
                         ) : null}
@@ -768,6 +793,13 @@ export default function MissionScaffold({ mission }) {
                           <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
                             <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-700">Simple explanation</p>
                             <p className="mt-2 text-sm text-emerald-900">{currentIntroSubtopic.simpleExplanation}</p>
+                          </div>
+                        ) : null}
+
+                        {activeIntroDetail ? (
+                          <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-3">
+                            <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-700">{activeIntroTerm}</p>
+                            <p className="mt-2 text-sm text-blue-900">{activeIntroDetail}</p>
                           </div>
                         ) : null}
 
@@ -800,7 +832,7 @@ export default function MissionScaffold({ mission }) {
                           className="rounded-full px-5 py-2 text-sm font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
                           style={{ backgroundColor: mission.accent }}
                         >
-                          {introSubtopicIndex === mission.introSubtopics.length - 1 ? 'Go to Problem' : 'Next'}
+                          {introSubtopicIndex === mission.introSubtopics.length - 1 ? 'Proceed to Activity' : 'Next'}
                         </button>
                       </div>
                     </div>
@@ -823,7 +855,9 @@ export default function MissionScaffold({ mission }) {
                   {isRecursionMission ? (
                     <RecursionVisualizationPanel />
                   ) : isIntroductionMission ? (
-                    <IntroductionDsaVisualization subtopicIndex={introSubtopicIndex} />
+                    <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm">
+                      Introduction visualization placeholder.
+                    </div>
                   ) : (
                     <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm">
                       Topic visualization will appear here.

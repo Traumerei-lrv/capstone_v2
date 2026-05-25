@@ -5,7 +5,6 @@ import {
   User, 
   ChevronRight, 
   Trophy, 
-  Coins, 
   Flame, 
   Award, 
   CheckCircle, 
@@ -86,7 +85,6 @@ const UserProfile = ({ user, points }) => (
     
     <div className="flex flex-wrap gap-8 justify-center md:justify-end py-4 px-8 bg-blue-50/50 rounded-2xl border border-blue-100">
       <StatItem icon={Trophy} label="Level" value="5" color="text-blue-600 bg-blue-100" />
-      <StatItem icon={Coins} label="Coins" value="4500" color="text-orange-600 bg-orange-100" />
       <StatItem icon={Flame} label="Streak" value="7" color="text-red-600 bg-red-100" />
       <StatItem icon={Award} label="Badges" value="12" color="text-emerald-600 bg-emerald-100" />
     </div>

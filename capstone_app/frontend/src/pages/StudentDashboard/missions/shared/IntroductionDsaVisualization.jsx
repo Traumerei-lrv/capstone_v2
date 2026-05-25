@@ -85,9 +85,11 @@ class IntroductionDsaScene extends Phaser.Scene {
     if (topicIndex === 0) this.drawDataStructure();
     if (topicIndex === 1) this.drawTypes();
     if (topicIndex === 2) this.drawAdtMachine();
-    if (topicIndex === 3) this.drawCommonAdts();
+    if (topicIndex === 3) this.drawAdtBenefits();
     if (topicIndex === 4) this.drawOperations();
-    if (topicIndex === 5) this.drawAlgorithm();
+    if (topicIndex === 5) this.drawCommonAdts();
+    if (topicIndex === 6) this.drawAlgorithm();
+    if (topicIndex === 7) this.drawAlgorithmCharacteristics();
   }
 
   drawBackdrop() {
@@ -112,9 +114,11 @@ class IntroductionDsaScene extends Phaser.Scene {
       'Data Structure Storage',
       'Linear vs Non-Linear',
       'Abstract Data Type',
-      'Common ADTs',
+      'Benefits of ADT',
       'Main ADT Operations',
+      'Common ADTs',
       'Algorithm Execution',
+      'Algorithm Characteristics',
     ];
 
     this.add.text(30, 24, 'MISSION CONTROL DATA ORGANIZER', {
@@ -127,7 +131,7 @@ class IntroductionDsaScene extends Phaser.Scene {
       fontSize: '13px',
       color: '#facc15',
     });
-    this.add.text(812, 30, `0${topicIndex + 1}/06`, {
+    this.add.text(812, 30, `${String(topicIndex + 1).padStart(2, '0')}/08`, {
       fontFamily: 'Pixellari, monospace',
       fontSize: '18px',
       color: '#93c5fd',
@@ -241,6 +245,37 @@ class IntroductionDsaScene extends Phaser.Scene {
     });
   }
 
+  drawAdtBenefits() {
+    addPanel(this, 450, 298, 760, 376, 'ADT Benefits Console');
+
+    const cards = [
+      { title: 'Readable', detail: 'Operations are clear and easy to follow.', x: 250, y: 205, color: 0x2563eb },
+      { title: 'Reusable', detail: 'Same ADT can be used in many programs.', x: 450, y: 205, color: 0x16a34a },
+      { title: 'Changeable', detail: 'Internal code can change safely.', x: 650, y: 205, color: 0xf97316 },
+    ];
+
+    cards.forEach((card) => {
+      this.add.rectangle(card.x, card.y, 190, 128, card.color, 0.92).setStrokeStyle(2, 0xffffff, 0.7);
+      this.add.text(card.x, card.y - 42, card.title, {
+        fontFamily: 'Pixellari, monospace',
+        fontSize: '14px',
+        color: '#ffffff',
+      }).setOrigin(0.5);
+      this.add.text(card.x - 74, card.y - 18, card.detail, {
+        fontFamily: 'Pixellari, monospace',
+        fontSize: '11px',
+        color: '#e2e8f0',
+        wordWrap: { width: 148 },
+      });
+    });
+
+    this.add.text(450, 414, 'ADT separates behavior from implementation.', {
+      fontFamily: 'Pixellari, monospace',
+      fontSize: '14px',
+      color: '#fef3c7',
+    }).setOrigin(0.5);
+  }
+
   drawOperations() {
     this.drawIncomingPackets();
     addPanel(this, 575, 298, 500, 376, 'Operation Console');
@@ -281,6 +316,32 @@ class IntroductionDsaScene extends Phaser.Scene {
       fontSize: '15px',
       color: '#fef3c7',
     }).setOrigin(0.5);
+  }
+
+  drawAlgorithmCharacteristics() {
+    addPanel(this, 450, 298, 760, 376, 'Algorithm Characteristics');
+
+    const entries = [
+      { label: 'Finiteness', value: 'Stops in limited steps', x: 250, y: 170 },
+      { label: 'Definiteness', value: 'Each step is clear', x: 450, y: 170 },
+      { label: 'Input', value: 'Uses defined data', x: 650, y: 170 },
+      { label: 'Output', value: 'Produces result', x: 350, y: 305 },
+      { label: 'Uniqueness', value: 'Depends on input/previous step', x: 550, y: 305 },
+    ];
+
+    entries.forEach((entry) => {
+      this.add.rectangle(entry.x, entry.y, 210, 88, 0x1e3a8a, 0.93).setStrokeStyle(2, 0x93c5fd, 0.8);
+      this.add.text(entry.x, entry.y - 22, entry.label, {
+        fontFamily: 'Pixellari, monospace',
+        fontSize: '13px',
+        color: '#facc15',
+      }).setOrigin(0.5);
+      this.add.text(entry.x, entry.y - 2, entry.value, {
+        fontFamily: 'Pixellari, monospace',
+        fontSize: '11px',
+        color: '#dbeafe',
+      }).setOrigin(0.5);
+    });
   }
 }
 

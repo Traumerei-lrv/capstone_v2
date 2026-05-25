@@ -523,7 +523,7 @@ export default function TreeDeliveryDrone({ onBack }) {
 
   const handleBack = () => {
     if (onBack) onBack();
-    else navigate("/playershipdashboard");
+    else navigate("/playership");
   };
 
   return (
